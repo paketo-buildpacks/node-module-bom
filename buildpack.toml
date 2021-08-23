@@ -1,0 +1,31 @@
+api = "0.5"
+
+[buildpack]
+  homepage = "https://github.com/paketo-buildpacks/node-module-bom"
+  id = "paketo-buildpacks/node-module-bom"
+  name = "Paketo Node Module Bill of Materials Generator Buildpack"
+
+[metadata]
+  include-files = ["bin/build", "bin/detect", "bin/run", "buildpack.toml"]
+  pre-package = "./scripts/build.sh"
+
+  [[metadata.dependencies]]
+    cpe = "cpe:2.3:a:owasp:cyclonedx-node-module:3.0.3:*:*:*:*:*:*:*"
+    id = "cyclonedx-node-module"
+    licenses = ["Apache-2.0", "ECL-2.0", "SHL-0.51", "SHL-0.5"]
+    name = "CycloneDX Node.js Module"
+    purl = "pkg:npm/%40cyclonedx/bom@3.0.3"
+    sha256 = "2814d1a75d5ba5b7ae265c334d5e51102420d9a00caa31d27a59cb793fe93ae5"
+    source = "https://registry.npmjs.org/@cyclonedx/bom/-/bom-3.0.3.tgz"
+    source_sha256 = "f8b1a95988410974793ed700d215d37bfd090f3aa653a802c316ed5cfabc09f5"
+    stacks = ["io.buildpacks.stacks.bionic"]
+    uri = "https://deps.paketo.io/cyclonedx-node-module/cyclonedx-node-module_3.0.3_linux_x64_bionic_2814d1a7.tgz"
+    version = "3.0.3"
+
+  [[metadata.dependency-constraints]]
+    constraint = "*"
+    id = "cyclonedx-node-module"
+    patches = 1
+
+[[stacks]]
+  id = "io.buildpacks.stacks.bionic"
