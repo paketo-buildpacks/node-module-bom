@@ -31,22 +31,6 @@ This will create a `buildpackage.cnb` file under the `build` directory which you
 can use to build your app as follows:
 `pack build <app-name> -p <path-to-app> -b build/buildpackage.cnb`
 
-## Configurations
-
-### Opting Out
-
-Users can opt out of this buildpack by setting the `BP_ENABLE_MODULE_BOM`
-environment variable during container build-time to `false` either directly
-(ex. `pack build my-app --env BP_ENABLE_MODULE_BOM=false`) or through a
-[`project.toml`
-file](https://github.com/buildpacks/spec/blob/main/extensions/project-descriptor.md).
-
-```shell
-$BP_ENABLE_MODULE_BOM=false
-```
-
-The default value of `BP_ENABLE_MODULE_BOM` is `true`.
-
 ## Run Tests
 
 To run all unit tests, run:
