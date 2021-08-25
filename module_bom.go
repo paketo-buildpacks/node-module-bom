@@ -79,16 +79,16 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 	for _, entry := range bom.Components {
 		packitEntry := packit.BOMEntry{
 			Name: entry.Name,
-			Metadata: map[string]interface{}{
-				"version": entry.Version,
-				"purl":    entry.PURL,
+			Metadata: &packit.BOMMetadata{
+				Version: entry.Version,
+				PURL:    entry.PURL,
 			},
 		}
 
 		if len(entry.Hashes) > 0 {
-			packitEntry.Metadata["checksum"] = map[string]string{
-				"algorithm": entry.Hashes[0].Algorithm,
-				"hash":      entry.Hashes[0].Content,
+			packitEntry.Metadata.Checksum = &packit.BOMChecksum{
+				Algorithm: entry.Hashes[0].Algorithm,
+				Hash:      entry.Hashes[0].Content,
 			}
 		}
 
@@ -96,7 +96,7 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 		for _, license := range entry.Licenses {
 			licenses = append(licenses, license.License.ID)
 		}
-		packitEntry.Metadata["licenses"] = licenses
+		packitEntry.Metadata.Licenses = licenses
 		entries = append(entries, packitEntry)
 	}
 

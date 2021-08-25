@@ -64,12 +64,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		dependencyManager.GenerateBillOfMaterialsCall.Returns.BOMEntrySlice = []packit.BOMEntry{
 			{
 				Name: "cyclonedx-node-module",
-				Metadata: map[string]interface{}{
-					"version": "cyclonedx-node-module-dependency-version",
-					"name":    "cyclonedx-node-module-dependency-name",
-					"sha256":  "cyclonedx-node-module-dependency-sha",
-					"stacks":  []string{"some-stack"},
-					"uri":     "cyclonedx-node-module-dependency-uri",
+				Metadata: &packit.BOMMetadata{
+					Version: "cyclonedx-node-module-dependency-version",
+					Checksum: &packit.BOMChecksum{
+						Algorithm: "SHA-256",
+						Hash:      "cyclonedx-node-module-dependency-sha",
+					},
+					URI: "cyclonedx-node-module-dependency-uri",
 				},
 			},
 		}
@@ -78,12 +79,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		nodeModuleBOM.GenerateCall.Returns.BOMEntrySlice = []packit.BOMEntry{
 			{
 				Name: "leftpad",
-				Metadata: map[string]interface{}{
-					"version": "leftpad-dependency-version",
-					"name":    "leftpad-dependency-name",
-					"sha256":  "leftpad-dependency-sha",
-					"stacks":  []string{"some-stack"},
-					"uri":     "leftpad-dependency-uri",
+				Metadata: &packit.BOMMetadata{
+					Version: "leftpad-dependency-version",
+					Checksum: &packit.BOMChecksum{
+						Algorithm: "SHA-256",
+						Hash:      "leftpad-dependency-sha",
+					},
+					URI: "leftpad-dependency-uri",
 				},
 			},
 		}
@@ -136,22 +138,24 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				BOM: []packit.BOMEntry{
 					{
 						Name: "cyclonedx-node-module",
-						Metadata: map[string]interface{}{
-							"version": "cyclonedx-node-module-dependency-version",
-							"name":    "cyclonedx-node-module-dependency-name",
-							"sha256":  "cyclonedx-node-module-dependency-sha",
-							"stacks":  []string{"some-stack"},
-							"uri":     "cyclonedx-node-module-dependency-uri",
+						Metadata: &packit.BOMMetadata{
+							Version: "cyclonedx-node-module-dependency-version",
+							Checksum: &packit.BOMChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "cyclonedx-node-module-dependency-sha",
+							},
+							URI: "cyclonedx-node-module-dependency-uri",
 						},
 					},
 					{
 						Name: "leftpad",
-						Metadata: map[string]interface{}{
-							"version": "leftpad-dependency-version",
-							"name":    "leftpad-dependency-name",
-							"sha256":  "leftpad-dependency-sha",
-							"stacks":  []string{"some-stack"},
-							"uri":     "leftpad-dependency-uri",
+						Metadata: &packit.BOMMetadata{
+							Version: "leftpad-dependency-version",
+							Checksum: &packit.BOMChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "leftpad-dependency-sha",
+							},
+							URI: "leftpad-dependency-uri",
 						},
 					},
 				},
@@ -160,12 +164,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				BOM: []packit.BOMEntry{
 					{
 						Name: "leftpad",
-						Metadata: map[string]interface{}{
-							"version": "leftpad-dependency-version",
-							"name":    "leftpad-dependency-name",
-							"sha256":  "leftpad-dependency-sha",
-							"stacks":  []string{"some-stack"},
-							"uri":     "leftpad-dependency-uri",
+						Metadata: &packit.BOMMetadata{
+							Version: "leftpad-dependency-version",
+							Checksum: &packit.BOMChecksum{
+								Algorithm: "SHA-256",
+								Hash:      "leftpad-dependency-sha",
+							},
+							URI: "leftpad-dependency-uri",
 						},
 					},
 				},
@@ -256,22 +261,24 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					BOM: []packit.BOMEntry{
 						{
 							Name: "cyclonedx-node-module",
-							Metadata: map[string]interface{}{
-								"version": "cyclonedx-node-module-dependency-version",
-								"name":    "cyclonedx-node-module-dependency-name",
-								"sha256":  "cyclonedx-node-module-dependency-sha",
-								"stacks":  []string{"some-stack"},
-								"uri":     "cyclonedx-node-module-dependency-uri",
+							Metadata: &packit.BOMMetadata{
+								Version: "cyclonedx-node-module-dependency-version",
+								Checksum: &packit.BOMChecksum{
+									Algorithm: "SHA-256",
+									Hash:      "cyclonedx-node-module-dependency-sha",
+								},
+								URI: "cyclonedx-node-module-dependency-uri",
 							},
 						},
 						{
 							Name: "leftpad",
-							Metadata: map[string]interface{}{
-								"version": "leftpad-dependency-version",
-								"name":    "leftpad-dependency-name",
-								"sha256":  "leftpad-dependency-sha",
-								"stacks":  []string{"some-stack"},
-								"uri":     "leftpad-dependency-uri",
+							Metadata: &packit.BOMMetadata{
+								Version: "leftpad-dependency-version",
+								Checksum: &packit.BOMChecksum{
+									Algorithm: "SHA-256",
+									Hash:      "leftpad-dependency-sha",
+								},
+								URI: "leftpad-dependency-uri",
 							},
 						},
 					},
@@ -280,12 +287,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					BOM: []packit.BOMEntry{
 						{
 							Name: "leftpad",
-							Metadata: map[string]interface{}{
-								"version": "leftpad-dependency-version",
-								"name":    "leftpad-dependency-name",
-								"sha256":  "leftpad-dependency-sha",
-								"stacks":  []string{"some-stack"},
-								"uri":     "leftpad-dependency-uri",
+							Metadata: &packit.BOMMetadata{
+								Version: "leftpad-dependency-version",
+								Checksum: &packit.BOMChecksum{
+									Algorithm: "SHA-256",
+									Hash:      "leftpad-dependency-sha",
+								},
+								URI: "leftpad-dependency-uri",
 							},
 						},
 					},

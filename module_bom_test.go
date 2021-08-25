@@ -124,22 +124,22 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(bomEntries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "leftpad",
-					Metadata: map[string]interface{}{
-						"checksum": map[string]string{
-							"algorithm": "SHA-1",
-							"hash":      "86b1a4de4face180ac545a83f1503523d8fed115",
+					Metadata: &packit.BOMMetadata{
+						Checksum: &packit.BOMChecksum{
+							Algorithm: "SHA-1",
+							Hash:      "86b1a4de4face180ac545a83f1503523d8fed115",
 						},
-						"purl":     "pkg:npm/leftpad@0.0.1",
-						"licenses": []string{"BSD-3-Clause"},
-						"version":  "0.0.1",
+						PURL:     "pkg:npm/leftpad@0.0.1",
+						Licenses: []string{"BSD-3-Clause"},
+						Version:  "0.0.1",
 					},
 				},
 				{
 					Name: "rightpad",
-					Metadata: map[string]interface{}{
-						"purl":     "pkg:npm/rightpad@1.0.0",
-						"licenses": []string{"Apache"},
-						"version":  "1.0.0",
+					Metadata: &packit.BOMMetadata{
+						PURL:     "pkg:npm/rightpad@1.0.0",
+						Licenses: []string{"Apache"},
+						Version:  "1.0.0",
 					},
 				},
 			}))
