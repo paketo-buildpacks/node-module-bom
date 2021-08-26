@@ -67,9 +67,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		dependencyManager.GenerateBillOfMaterialsCall.Returns.BOMEntrySlice = []packit.BOMEntry{
 			{
 				Name: "cyclonedx-node-module",
-				Metadata: &packit.BOMMetadata{
+				Metadata: packit.BOMMetadata{
 					Version: "cyclonedx-node-module-dependency-version",
-					Checksum: &packit.BOMChecksum{
+					Checksum: packit.BOMChecksum{
 						Algorithm: algorithm,
 						Hash:      "cyclonedx-node-module-dependency-sha",
 					},
@@ -82,9 +82,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		nodeModuleBOM.GenerateCall.Returns.BOMEntrySlice = []packit.BOMEntry{
 			{
 				Name: "leftpad",
-				Metadata: &packit.BOMMetadata{
+				Metadata: packit.BOMMetadata{
 					Version: "leftpad-dependency-version",
-					Checksum: &packit.BOMChecksum{
+					Checksum: packit.BOMChecksum{
 						Algorithm: algorithm,
 						Hash:      "leftpad-dependency-sha",
 					},
@@ -144,9 +144,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				BOM: []packit.BOMEntry{
 					{
 						Name: "cyclonedx-node-module",
-						Metadata: &packit.BOMMetadata{
+						Metadata: packit.BOMMetadata{
 							Version: "cyclonedx-node-module-dependency-version",
-							Checksum: &packit.BOMChecksum{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "cyclonedx-node-module-dependency-sha",
 							},
@@ -155,9 +155,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					},
 					{
 						Name: "leftpad",
-						Metadata: &packit.BOMMetadata{
+						Metadata: packit.BOMMetadata{
 							Version: "leftpad-dependency-version",
-							Checksum: &packit.BOMChecksum{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "leftpad-dependency-sha",
 							},
@@ -170,9 +170,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				BOM: []packit.BOMEntry{
 					{
 						Name: "leftpad",
-						Metadata: &packit.BOMMetadata{
+						Metadata: packit.BOMMetadata{
 							Version: "leftpad-dependency-version",
-							Checksum: &packit.BOMChecksum{
+							Checksum: packit.BOMChecksum{
 								Algorithm: algorithm,
 								Hash:      "leftpad-dependency-sha",
 							},
@@ -270,9 +270,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					BOM: []packit.BOMEntry{
 						{
 							Name: "cyclonedx-node-module",
-							Metadata: &packit.BOMMetadata{
+							Metadata: packit.BOMMetadata{
 								Version: "cyclonedx-node-module-dependency-version",
-								Checksum: &packit.BOMChecksum{
+								Checksum: packit.BOMChecksum{
 									Algorithm: algorithm,
 									Hash:      "cyclonedx-node-module-dependency-sha",
 								},
@@ -281,9 +281,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						},
 						{
 							Name: "leftpad",
-							Metadata: &packit.BOMMetadata{
+							Metadata: packit.BOMMetadata{
 								Version: "leftpad-dependency-version",
-								Checksum: &packit.BOMChecksum{
+								Checksum: packit.BOMChecksum{
 									Algorithm: algorithm,
 									Hash:      "leftpad-dependency-sha",
 								},
@@ -296,9 +296,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					BOM: []packit.BOMEntry{
 						{
 							Name: "leftpad",
-							Metadata: &packit.BOMMetadata{
+							Metadata: packit.BOMMetadata{
 								Version: "leftpad-dependency-version",
-								Checksum: &packit.BOMChecksum{
+								Checksum: packit.BOMChecksum{
 									Algorithm: algorithm,
 									Hash:      "leftpad-dependency-sha",
 								},

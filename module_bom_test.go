@@ -127,8 +127,8 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(bomEntries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "leftpad",
-					Metadata: &packit.BOMMetadata{
-						Checksum: &packit.BOMChecksum{
+					Metadata: packit.BOMMetadata{
+						Checksum: packit.BOMChecksum{
 							Algorithm: algorithm,
 							Hash:      "86b1a4de4face180ac545a83f1503523d8fed115",
 						},
@@ -139,7 +139,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				},
 				{
 					Name: "rightpad",
-					Metadata: &packit.BOMMetadata{
+					Metadata: packit.BOMMetadata{
 						PURL:     "pkg:npm/rightpad@1.0.0",
 						Licenses: []string{"Apache"},
 						Version:  "1.0.0",

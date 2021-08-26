@@ -79,7 +79,7 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 	for _, entry := range bom.Components {
 		packitEntry := packit.BOMEntry{
 			Name: entry.Name,
-			Metadata: &packit.BOMMetadata{
+			Metadata: packit.BOMMetadata{
 				Version: entry.Version,
 				PURL:    entry.PURL,
 			},
@@ -90,7 +90,7 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 			if err != nil {
 				return nil, err
 			}
-			packitEntry.Metadata.Checksum = &packit.BOMChecksum{
+			packitEntry.Metadata.Checksum = packit.BOMChecksum{
 				Algorithm: algorithm,
 				Hash:      entry.Hashes[0].Content,
 			}
