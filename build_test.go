@@ -51,6 +51,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			return timestamp
 		})
 
+		algorithm, err := packit.GetBOMChecksumAlgorithm("SHA-256")
+		Expect(err).NotTo(HaveOccurred())
+
 		dependencyManager = &fakes.DependencyManager{}
 		dependencyManager.ResolveCall.Returns.Dependency = postal.Dependency{
 			ID:      "cyclonedx-node-module",
@@ -67,7 +70,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Metadata: &packit.BOMMetadata{
 					Version: "cyclonedx-node-module-dependency-version",
 					Checksum: &packit.BOMChecksum{
-						Algorithm: "SHA-256",
+						Algorithm: algorithm,
 						Hash:      "cyclonedx-node-module-dependency-sha",
 					},
 					URI: "cyclonedx-node-module-dependency-uri",
@@ -82,7 +85,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Metadata: &packit.BOMMetadata{
 					Version: "leftpad-dependency-version",
 					Checksum: &packit.BOMChecksum{
-						Algorithm: "SHA-256",
+						Algorithm: algorithm,
 						Hash:      "leftpad-dependency-sha",
 					},
 					URI: "leftpad-dependency-uri",
@@ -116,6 +119,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 		Expect(err).NotTo(HaveOccurred())
 
+		algorithm, err := packit.GetBOMChecksumAlgorithm("SHA-256")
+		Expect(err).NotTo(HaveOccurred())
+
 		Expect(result).To(Equal(packit.BuildResult{
 			Layers: []packit.Layer{
 				{
@@ -141,7 +147,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						Metadata: &packit.BOMMetadata{
 							Version: "cyclonedx-node-module-dependency-version",
 							Checksum: &packit.BOMChecksum{
-								Algorithm: "SHA-256",
+								Algorithm: algorithm,
 								Hash:      "cyclonedx-node-module-dependency-sha",
 							},
 							URI: "cyclonedx-node-module-dependency-uri",
@@ -152,7 +158,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						Metadata: &packit.BOMMetadata{
 							Version: "leftpad-dependency-version",
 							Checksum: &packit.BOMChecksum{
-								Algorithm: "SHA-256",
+								Algorithm: algorithm,
 								Hash:      "leftpad-dependency-sha",
 							},
 							URI: "leftpad-dependency-uri",
@@ -167,7 +173,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						Metadata: &packit.BOMMetadata{
 							Version: "leftpad-dependency-version",
 							Checksum: &packit.BOMChecksum{
-								Algorithm: "SHA-256",
+								Algorithm: algorithm,
 								Hash:      "leftpad-dependency-sha",
 							},
 							URI: "leftpad-dependency-uri",
@@ -240,6 +246,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
+			algorithm, err := packit.GetBOMChecksumAlgorithm("SHA-256")
+			Expect(err).NotTo(HaveOccurred())
+
 			Expect(result).To(Equal(packit.BuildResult{
 				Layers: []packit.Layer{
 					{
@@ -264,7 +273,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 							Metadata: &packit.BOMMetadata{
 								Version: "cyclonedx-node-module-dependency-version",
 								Checksum: &packit.BOMChecksum{
-									Algorithm: "SHA-256",
+									Algorithm: algorithm,
 									Hash:      "cyclonedx-node-module-dependency-sha",
 								},
 								URI: "cyclonedx-node-module-dependency-uri",
@@ -275,7 +284,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 							Metadata: &packit.BOMMetadata{
 								Version: "leftpad-dependency-version",
 								Checksum: &packit.BOMChecksum{
-									Algorithm: "SHA-256",
+									Algorithm: algorithm,
 									Hash:      "leftpad-dependency-sha",
 								},
 								URI: "leftpad-dependency-uri",
@@ -290,7 +299,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 							Metadata: &packit.BOMMetadata{
 								Version: "leftpad-dependency-version",
 								Checksum: &packit.BOMChecksum{
-									Algorithm: "SHA-256",
+									Algorithm: algorithm,
 									Hash:      "leftpad-dependency-sha",
 								},
 								URI: "leftpad-dependency-uri",

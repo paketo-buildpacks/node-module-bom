@@ -121,12 +121,15 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				Stderr: commandOutput,
 			}))
 
+			algorithm, err := packit.GetBOMChecksumAlgorithm("SHA-1")
+			Expect(err).ToNot(HaveOccurred())
+
 			Expect(bomEntries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "leftpad",
 					Metadata: &packit.BOMMetadata{
 						Checksum: &packit.BOMChecksum{
-							Algorithm: "SHA-1",
+							Algorithm: algorithm,
 							Hash:      "86b1a4de4face180ac545a83f1503523d8fed115",
 						},
 						PURL:     "pkg:npm/leftpad@0.0.1",
@@ -191,6 +194,49 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					_, err := moduleBOM.Generate(workingDir)
 					Expect(err).To(MatchError(ContainSubstring("failed to decode bom.json")))
+				})
+			})
+
+			context("the BOM entry contains unsupported checksum algorithm", func() {
+				it.Before(func() {
+
+					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
+						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
+							`
+{
+  "components": [
+    {
+      "type": "library",
+      "name": "leftpad",
+      "version": "0.0.1",
+      "description": "left pad numbers",
+      "hashes": [
+        {
+          "alg": "randomAlgorithm",
+          "content": "86b1a4de4face180ac545a83f1503523d8fed115"
+        }
+      ]
+		}
+  ]
+}
+`), 0644)).To(Succeed())
+						return nil
+					}
+
+					buffer = bytes.NewBuffer(nil)
+					commandOutput = bytes.NewBuffer(nil)
+
+					moduleBOM = nodemodulebom.NewModuleBOM(executable, scribe.NewEmitter(buffer))
+				})
+
+				it.After(func() {
+					Expect(os.RemoveAll(workingDir)).To(Succeed())
+				})
+
+				it("returns an error", func() {
+					_, err := moduleBOM.Generate(workingDir)
+					Expect(err).To(MatchError("failed to get supported BOM checksum algorithm: randomAlgorithm is not valid"))
+
 				})
 			})
 		})

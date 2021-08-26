@@ -86,8 +86,12 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 		}
 
 		if len(entry.Hashes) > 0 {
+			algorithm, err := packit.GetBOMChecksumAlgorithm(entry.Hashes[0].Algorithm)
+			if err != nil {
+				return nil, err
+			}
 			packitEntry.Metadata.Checksum = &packit.BOMChecksum{
-				Algorithm: entry.Hashes[0].Algorithm,
+				Algorithm: algorithm,
 				Hash:      entry.Hashes[0].Content,
 			}
 		}
