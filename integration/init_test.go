@@ -118,6 +118,7 @@ func TestIntegration(t *testing.T) {
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("NPM", testNPM)
+	suite("Node16", testNode16)
 	suite("Offline", testOffline)
 	suite("Vendored", testVendored)
 	suite("Yarn", testYarn)

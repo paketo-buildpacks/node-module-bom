@@ -94,6 +94,20 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 				Algorithm: algorithm,
 				Hash:      entry.Hashes[0].Content,
 			}
+		} else {
+			// if the cyclonedx-bom tool doesn't find a hash (Node Engine v15+)
+			// look up the integrity field for the package from the `package-lock.json`
+			if _, err := os.Stat(filepath.Join(workingDir, "package-lock.json")); err == nil {
+				alg, hash, err := retrieveIntegrityFromLockfile(workingDir, entry.Name)
+				if err != nil {
+					return nil, err
+				}
+
+				packitEntry.Metadata["checksum"] = map[string]string{
+					"algorithm": alg,
+					"hash":      hash,
+				}
+			}
 		}
 
 		var licenses []string
@@ -110,4 +124,41 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 	}
 
 	return entries, nil
+}
+
+// retrieveIntegrityFromLockfile is a function that will read the
+// package-lock.json if there is one, and retrieve the integrity (hash) for a
+// specific dependency. It returns the hash algorithm and hash itself.
+func retrieveIntegrityFromLockfile(workingDir, pkg string) (string, string, error) {
+	file, err := os.Open(filepath.Join(workingDir, "package-lock.json"))
+	if err != nil {
+		return "", "", fmt.Errorf("failed to open package-lock.json: %w", err)
+	}
+	defer file.Close()
+
+	var packageLock struct {
+		Name            string                 `json:"name"`
+		LockfileVersion int                    `json:"lockfileVersion"`
+		Dependencies    map[string]interface{} `json:"dependencies"`
+	}
+
+	err = json.NewDecoder(file).Decode(&packageLock)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode package-lock: %w", err)
+	}
+
+	for name, dependency := range packageLock.Dependencies {
+		if name == pkg {
+			dependencyMap := dependency.(map[string]interface{})
+			integrity := dependencyMap["integrity"].(string)
+
+			if strings.Contains(integrity, "-") {
+				algAndHash := strings.Split(integrity, "-")
+				return algAndHash[0], algAndHash[1], nil
+			}
+			return "", "", nil
+		}
+	}
+
+	return "", "", nil
 }

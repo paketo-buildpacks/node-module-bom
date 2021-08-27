@@ -95,7 +95,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
     }
   ]
 }
-`), 0644)).To(Succeed())
+`), 0600)).To(Succeed())
 			return nil
 		}
 
@@ -110,7 +110,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("Generate", func() {
-		it("succeeds in installing the BOM generation tool", func() {
+		it("succeeds in installing the BOM generation tool and creating the BOM", func() {
 			bomEntries, err := moduleBOM.Generate(workingDir)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -150,6 +150,79 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			Expect(filepath.Join(workingDir, "bom.json")).ToNot(BeAnExistingFile())
 		})
 
+		context("the bom.json does not contain hashes for node_modules", func() {
+			it.Before(func() {
+				executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
+					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
+						`
+{
+  "components": [
+    {
+      "type": "library",
+      "name": "leftpad",
+      "version": "0.0.1",
+      "description": "left pad numbers",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl": "pkg:npm/leftpad@0.0.1"
+		}
+  ]
+}
+`), 0600)).To(Succeed())
+					return nil
+				}
+
+				Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`
+{
+  "name": "simple_app",
+  "lockfileVersion": 1,
+  "requires": true,
+  "dependencies": {
+    "leftpad": {
+      "version": "0.0.1",
+			"integrity": "sha512-hashFromPackageLockJson"
+    }
+  }
+}
+`), 0600)).To(Succeed())
+
+			})
+			it.After(func() {
+				Expect(os.RemoveAll(workingDir)).To(Succeed())
+			})
+			it("it gets the hashes from the package-lock.json", func() {
+				bomEntries, err := moduleBOM.Generate(workingDir)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(executable.ExecuteCall.Receives.Execution).To(Equal(pexec.Execution{
+					Args:   []string{"-o", "bom.json"},
+					Dir:    workingDir,
+					Stdout: commandOutput,
+					Stderr: commandOutput,
+				}))
+
+				Expect(bomEntries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "leftpad",
+						Metadata: packit.BOMMetadata{
+							Checksum: packit.BOMChecksum{
+								Algorithm: packit.SHA512,
+								Hash:      "hashFromPackageLockJson",
+							},
+							PURL:     "pkg:npm/leftpad@0.0.1",
+							Licenses: []string{"BSD-3-Clause"},
+							Version:  "0.0.1",
+						},
+					},
+				}))
+			})
+		})
+
 		context("failure cases", func() {
 			context("the cyclonedx-bom executable call fails", func() {
 				it.Before(func() {
@@ -186,7 +259,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			context("cannot decode the bom.json into a struct", func() {
 				it.Before(func() {
 					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(``), 0644)).To(Succeed())
+						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(``), 0600)).To(Succeed())
 						return nil
 					}
 				})
@@ -199,7 +272,6 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 
 			context("the BOM entry contains unsupported checksum algorithm", func() {
 				it.Before(func() {
-
 					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
 						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
 							`
@@ -236,7 +308,6 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					_, err := moduleBOM.Generate(workingDir)
 					Expect(err).To(MatchError("failed to get supported BOM checksum algorithm: randomAlgorithm is not valid"))
-
 				})
 			})
 		})
