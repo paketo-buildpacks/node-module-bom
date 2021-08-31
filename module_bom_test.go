@@ -84,6 +84,12 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
       "name": "rightpad",
       "version": "1.0.0",
       "description": "right pad numbers",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "123456789"
+        }
+      ],
       "licenses": [
         {
           "license": {
@@ -143,6 +149,10 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 						PURL:     "pkg:npm/rightpad@1.0.0",
 						Licenses: []string{"Apache"},
 						Version:  "1.0.0",
+						Checksum: packit.BOMChecksum{
+							Algorithm: packit.SHA256,
+							Hash:      "123456789",
+						},
 					},
 				},
 			}))
