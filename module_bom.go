@@ -30,7 +30,7 @@ func NewModuleBOM(executable Executable, logger scribe.Emitter) ModuleBOM {
 	}
 }
 
-type packageLockStruct struct {
+type packageLock struct {
 	Name            string                 `json:"name"`
 	LockfileVersion int                    `json:"lockfileVersion"`
 	Dependencies    map[string]interface{} `json:"dependencies"`
@@ -81,7 +81,7 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 		return nil, fmt.Errorf("failed to decode bom.json: %w", err)
 	}
 
-	var packageLock packageLockStruct
+	var packageLock packageLock
 	var entries []packit.BOMEntry
 	for _, entry := range bom.Components {
 		packitEntry := packit.BOMEntry{
@@ -135,17 +135,17 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 	return entries, nil
 }
 
-func getLockFile(workingDir string) (packageLockStruct, error) {
+func getLockFile(workingDir string) (packageLock, error) {
 	file, err := os.Open(filepath.Join(workingDir, "package-lock.json"))
 	if err != nil {
-		return packageLockStruct{}, fmt.Errorf("failed to open package-lock.json: %w", err)
+		return packageLock{}, fmt.Errorf("failed to open package-lock.json: %w", err)
 	}
 	defer file.Close()
 
-	var lockFile packageLockStruct
+	var lockFile packageLock
 	err = json.NewDecoder(file).Decode(&lockFile)
 	if err != nil {
-		return packageLockStruct{}, fmt.Errorf("failed to decode package-lock: %w", err)
+		return packageLock{}, fmt.Errorf("failed to decode package-lock: %w", err)
 	}
 	return lockFile, nil
 }
@@ -153,7 +153,7 @@ func getLockFile(workingDir string) (packageLockStruct, error) {
 // retrieveIntegrityFromLockfile is a function that will read the
 // package-lock.json if there is one, and retrieve the integrity (hash) for a
 // specific dependency. It returns the hash algorithm and hash itself.
-func retrieveIntegrityFromLockfile(packageLock packageLockStruct, pkg string) (string, string) {
+func retrieveIntegrityFromLockfile(packageLock packageLock, pkg string) (string, string) {
 	for name, dependency := range packageLock.Dependencies {
 		if name == pkg {
 			dependencyMap := dependency.(map[string]interface{})
