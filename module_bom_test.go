@@ -233,6 +233,116 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("the bom.json has no hashes and cannot open package-lock.json", func() {
+			it.Before(func() {
+				executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
+					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
+						`
+{
+  "components": [
+    {
+      "type": "library",
+      "name": "leftpad",
+      "version": "0.0.1",
+      "description": "left pad numbers",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl": "pkg:npm/leftpad@0.0.1"
+		}
+  ]
+}
+`), 0600)).To(Succeed())
+					return nil
+				}
+
+				Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`
+{
+  "name": "simple_app",
+  "lockfileVersion": 1,
+  "requires": true,
+  "dependencies": {
+    "leftpad": {
+      "version": "0.0.1",
+			"integrity": "sha521-hashFromPackageLockJson"
+    }
+  }
+}
+`), 0000)).To(Succeed())
+
+			})
+			it.After(func() {
+				Expect(os.RemoveAll(workingDir)).To(Succeed())
+			})
+			it("the output BOM does not contain hashes", func() {
+				bomEntries, err := moduleBOM.Generate(workingDir)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(bomEntries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "leftpad",
+						Metadata: packit.BOMMetadata{
+							PURL:     "pkg:npm/leftpad@0.0.1",
+							Licenses: []string{"BSD-3-Clause"},
+							Version:  "0.0.1",
+						},
+					},
+				}))
+			})
+		})
+
+		context("the bom.json has no hashes and cannot unmarshal package-lock.json", func() {
+			it.Before(func() {
+				executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
+					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
+						`
+{
+  "components": [
+    {
+      "type": "library",
+      "name": "leftpad",
+      "version": "0.0.1",
+      "description": "left pad numbers",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl": "pkg:npm/leftpad@0.0.1"
+		}
+  ]
+}
+`), 0600)).To(Succeed())
+					return nil
+				}
+
+				Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`bad json`), 0600)).To(Succeed())
+
+			})
+			it.After(func() {
+				Expect(os.RemoveAll(workingDir)).To(Succeed())
+			})
+			it("the output BOM does not contain hashes", func() {
+				bomEntries, err := moduleBOM.Generate(workingDir)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(bomEntries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "leftpad",
+						Metadata: packit.BOMMetadata{
+							PURL:     "pkg:npm/leftpad@0.0.1",
+							Licenses: []string{"BSD-3-Clause"},
+							Version:  "0.0.1",
+						},
+					},
+				}))
+			})
+		})
+
 		context("failure cases", func() {
 			context("the cyclonedx-bom executable call fails", func() {
 				it.Before(func() {
@@ -301,7 +411,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 		}
   ]
 }
-`), 0644)).To(Succeed())
+`), 0600)).To(Succeed())
 						return nil
 					}
 

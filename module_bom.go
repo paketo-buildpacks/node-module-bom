@@ -112,9 +112,15 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 			// just skip trying to get checksums
 			if err == nil {
 				alg, hash := retrieveIntegrityFromLockfile(packageLock, entry.Name)
-				packitEntry.Metadata["checksum"] = map[string]string{
-					"algorithm": alg,
-					"hash":      hash,
+
+				algorithm, err := packit.GetBOMChecksumAlgorithm(alg)
+				if err != nil {
+					return nil, err
+				}
+
+				packitEntry.Metadata.Checksum = packit.BOMChecksum{
+					Algorithm: algorithm,
+					Hash:      hash,
 				}
 			}
 		}
