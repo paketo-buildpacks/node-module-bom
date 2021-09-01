@@ -2,6 +2,8 @@ package nodemodulebom
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -111,7 +113,10 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 			// if the package-lock.json is not retrievable, do not error out
 			// just skip trying to get checksums
 			if err == nil {
-				alg, hash := retrieveIntegrityFromLockfile(packageLock, entry.Name)
+				alg, hash, err := retrieveIntegrityFromLockfile(packageLock, entry.Name)
+				if err != nil {
+					return nil, err
+				}
 
 				algorithm, err := packit.GetBOMChecksumAlgorithm(alg)
 				if err != nil {
@@ -159,7 +164,7 @@ func getLockFile(workingDir string) (packageLock, error) {
 // retrieveIntegrityFromLockfile is a function that will read the
 // package-lock.json if there is one, and retrieve the integrity (hash) for a
 // specific dependency. It returns the hash algorithm and hash itself.
-func retrieveIntegrityFromLockfile(packageLock packageLock, pkg string) (string, string) {
+func retrieveIntegrityFromLockfile(packageLock packageLock, pkg string) (string, string, error) {
 	for name, dependency := range packageLock.Dependencies {
 		if name == pkg {
 			dependencyMap := dependency.(map[string]interface{})
@@ -167,10 +172,14 @@ func retrieveIntegrityFromLockfile(packageLock packageLock, pkg string) (string,
 
 			if strings.Contains(integrity, "-") {
 				algAndHash := strings.Split(integrity, "-")
-				return algAndHash[0], algAndHash[1]
+				content, err := base64.StdEncoding.DecodeString(algAndHash[1])
+				if err != nil {
+					return "", "", err
+				}
+				return algAndHash[0], hex.EncodeToString(content), nil
 			}
-			return "", ""
+			return "", "", nil
 		}
 	}
-	return "", ""
+	return "", "", nil
 }

@@ -195,7 +195,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
   "dependencies": {
     "leftpad": {
       "version": "0.0.1",
-			"integrity": "sha512-hashFromPackageLockJson"
+			"integrity": "sha512-SSB3aXNoIEkgd2FzIGEgYmFsbGVy"
     }
   }
 }
@@ -222,7 +222,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 						Metadata: packit.BOMMetadata{
 							Checksum: packit.BOMChecksum{
 								Algorithm: packit.SHA512,
-								Hash:      "hashFromPackageLockJson",
+								Hash:      "49207769736820492077617320612062616c6c6572",
 							},
 							PURL:     "pkg:npm/leftpad@0.0.1",
 							Licenses: []string{"BSD-3-Clause"},
@@ -373,6 +373,57 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 					_, err := moduleBOM.Generate(workingDir)
 					Expect(err).To(HaveOccurred())
 					Expect(err).To(MatchError(ContainSubstring("failed to open bom.json")))
+				})
+			})
+
+			context("cannot decode base64 encoded checksum", func() {
+				it.Before(func() {
+					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
+						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
+							`
+{
+  "components": [
+    {
+      "type": "library",
+      "name": "leftpad",
+      "version": "0.0.1",
+      "description": "left pad numbers",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl": "pkg:npm/leftpad@0.0.1"
+		}
+  ]
+}
+`), 0600)).To(Succeed())
+						return nil
+					}
+
+					Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`
+{
+  "name": "simple_app",
+  "lockfileVersion": 1,
+  "requires": true,
+  "dependencies": {
+    "leftpad": {
+      "version": "0.0.1",
+			"integrity": "sha512-???"
+    }
+  }
+}
+`), 0600)).To(Succeed())
+
+				})
+				it.After(func() {
+					Expect(os.RemoveAll(workingDir)).To(Succeed())
+				})
+				it("returns an error", func() {
+					_, err := moduleBOM.Generate(workingDir)
+					Expect(err).To(MatchError(ContainSubstring("illegal base64 data")))
 				})
 			})
 
