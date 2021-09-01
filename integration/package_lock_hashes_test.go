@@ -13,7 +13,7 @@ import (
 	. "github.com/paketo-buildpacks/occam/matchers"
 )
 
-func testNode16(t *testing.T, context spec.G, it spec.S) {
+func testPackageLockHashes(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect     = NewWithT(t).Expect
 		Eventually = NewWithT(t).Eventually
@@ -47,7 +47,7 @@ func testNode16(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(source)).To(Succeed())
 		})
 
-		context("building an NPM app with Node Engine v16", func() {
+		context("building an NPM app that uses a NPM version with package-lock.json lockfile version 2", func() {
 			it.After(func() {
 				Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
 			})
@@ -55,7 +55,7 @@ func testNode16(t *testing.T, context spec.G, it spec.S) {
 			it("builds, logs and runs correctly", func() {
 				var err error
 
-				source, err = occam.Source(filepath.Join("testdata", "node_16_app"))
+				source, err = occam.Source(filepath.Join("testdata", "npm_app"))
 				Expect(err).ToNot(HaveOccurred())
 
 				var logs fmt.Stringer
@@ -67,6 +67,7 @@ func testNode16(t *testing.T, context spec.G, it spec.S) {
 						nodeModuleBOMBuildpack,
 						npmStartBuildpack,
 					).
+					WithEnv(map[string]string{"BP_NODE_VERSION": "~16"}).
 					Execute(name, source)
 				Expect(err).ToNot(HaveOccurred(), logs.String)
 

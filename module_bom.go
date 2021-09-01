@@ -2,8 +2,6 @@ package nodemodulebom
 
 import (
 	"bytes"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -30,12 +28,6 @@ func NewModuleBOM(executable Executable, logger scribe.Emitter) ModuleBOM {
 		executable: executable,
 		logger:     logger,
 	}
-}
-
-type packageLock struct {
-	Name            string                 `json:"name"`
-	LockfileVersion int                    `json:"lockfileVersion"`
-	Dependencies    map[string]interface{} `json:"dependencies"`
 }
 
 func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
@@ -82,7 +74,7 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 		return nil, fmt.Errorf("failed to decode bom.json: %w", err)
 	}
 
-	var packageLock packageLock
+	var lockfile PackageLock
 	var entries []packit.BOMEntry
 	for _, entry := range bom.Components {
 		packitEntry := packit.BOMEntry{
@@ -105,26 +97,16 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 		} else {
 			// if the cyclonedx-bom tool doesn't find a hash (Node Engine v15+)
 			// look up the integrity field for the package from the `package-lock.json`
-			if packageLock.Name == "" {
-				packageLock, err = getLockFile(workingDir)
+			if lockfile.Name == "" {
+				lockfile, err = NewPackageLock(workingDir)
 			}
 
 			// if the package-lock.json is not retrievable, do not error out
 			// just skip trying to get checksums
 			if err == nil {
-				alg, hash, err := retrieveIntegrityFromLockfile(packageLock, entry.Name)
+				packitEntry.Metadata.Checksum, err = lockfile.FindChecksum(entry.Name)
 				if err != nil {
-					return nil, err
-				}
-
-				algorithm, err := packit.GetBOMChecksumAlgorithm(alg)
-				if err != nil {
-					return nil, err
-				}
-
-				packitEntry.Metadata.Checksum = packit.BOMChecksum{
-					Algorithm: algorithm,
-					Hash:      hash,
+					return nil, fmt.Errorf("failed to get checksum from package-lock.json: %w", err)
 				}
 			}
 		}
@@ -143,42 +125,4 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 	}
 
 	return entries, nil
-}
-
-func getLockFile(workingDir string) (packageLock, error) {
-	file, err := os.Open(filepath.Join(workingDir, "package-lock.json"))
-	if err != nil {
-		return packageLock{}, fmt.Errorf("failed to open package-lock.json: %w", err)
-	}
-	defer file.Close()
-
-	var lockFile packageLock
-	err = json.NewDecoder(file).Decode(&lockFile)
-	if err != nil {
-		return packageLock{}, fmt.Errorf("failed to decode package-lock: %w", err)
-	}
-	return lockFile, nil
-}
-
-// retrieveIntegrityFromLockfile is a function that will read the
-// package-lock.json if there is one, and retrieve the integrity (hash) for a
-// specific dependency. It returns the hash algorithm and hash itself.
-func retrieveIntegrityFromLockfile(packageLock packageLock, pkg string) (string, string, error) {
-	for name, dependency := range packageLock.Dependencies {
-		if name == pkg {
-			dependencyMap := dependency.(map[string]interface{})
-			integrity := dependencyMap["integrity"].(string)
-
-			if strings.Contains(integrity, "-") {
-				algAndHash := strings.Split(integrity, "-")
-				content, err := base64.StdEncoding.DecodeString(algAndHash[1])
-				if err != nil {
-					return "", "", err
-				}
-				return algAndHash[0], hex.EncodeToString(content), nil
-			}
-			return "", "", nil
-		}
-	}
-	return "", "", nil
 }

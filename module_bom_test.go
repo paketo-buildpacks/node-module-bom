@@ -38,70 +38,68 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 
 		executable = &fakes.Executable{}
 		executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-			Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-				`
-{
-  "bomFormat": "CycloneDX",
-  "specVersion": "1.3",
-  "serialNumber": "urn:uuid:a717bde3-8a77-4ec6-a530-5d0d9007ecbe",
-  "version": 1,
-  "metadata": {
-    "timestamp": "2021-08-16T19:35:52.107Z",
-    "tools": [
-      {
-        "vendor": "CycloneDX",
-        "name": "Node.js module",
-        "version": "3.0.3"
-      }
-    ],
-    "component": {
-      "type": "library"
-    }
-  },
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "hashes": [
-        {
-          "alg": "SHA-1",
-          "content": "86b1a4de4face180ac545a83f1503523d8fed115"
-        }
-      ],
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "purl": "pkg:npm/leftpad@0.0.1"
-		},
-    {
-      "type": "library",
-      "name": "rightpad",
-      "version": "1.0.0",
-      "description": "right pad numbers",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "123456789"
-        }
-      ],
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache"
-          }
-        }
-      ],
-			"purl": "pkg:npm/rightpad@1.0.0"
-    }
-  ]
-}
-`), 0600)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+				"bomFormat": "CycloneDX",
+				"specVersion": "1.3",
+				"serialNumber": "urn:uuid:a717bde3-8a77-4ec6-a530-5d0d9007ecbe",
+				"version": 1,
+				"metadata": {
+					"timestamp": "2021-08-16T19:35:52.107Z",
+					"tools": [
+						{
+							"vendor": "CycloneDX",
+							"name": "Node.js module",
+							"version": "3.0.3"
+						}
+					],
+					"component": {
+						"type": "library"
+					}
+				},
+				"components": [
+					{
+						"type": "library",
+						"name": "leftpad",
+						"version": "0.0.1",
+						"description": "left pad numbers",
+						"hashes": [
+							{
+								"alg": "SHA-1",
+								"content": "86b1a4de4face180ac545a83f1503523d8fed115"
+							}
+						],
+						"licenses": [
+							{
+								"license": {
+									"id": "BSD-3-Clause"
+								}
+							}
+						],
+						"purl": "pkg:npm/leftpad@0.0.1"
+					},
+					{
+						"type": "library",
+						"name": "rightpad",
+						"version": "1.0.0",
+						"description": "right pad numbers",
+						"hashes": [
+							{
+								"alg": "SHA-256",
+								"content": "123456789"
+							}
+						],
+						"licenses": [
+							{
+								"license": {
+									"id": "Apache"
+								}
+							}
+						],
+						"purl": "pkg:npm/rightpad@1.0.0"
+					}
+				]
+			}
+			`), 0600)).To(Succeed())
 			return nil
 		}
 
@@ -163,43 +161,39 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 		context("the bom.json does not contain hashes for node_modules", func() {
 			it.Before(func() {
 				executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-						`
-{
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "purl": "pkg:npm/leftpad@0.0.1"
-		}
-  ]
-}
-`), 0600)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+						"components": [
+							{
+								"type": "library",
+								"name": "leftpad",
+								"version": "0.0.1",
+								"description": "left pad numbers",
+								"licenses": [
+									{
+										"license": {
+											"id": "BSD-3-Clause"
+										}
+									}
+								],
+								"purl": "pkg:npm/leftpad@0.0.1"
+							}
+						]
+					}`), 0600)).To(Succeed())
 					return nil
 				}
 
 				Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`
-{
-  "name": "simple_app",
-  "lockfileVersion": 1,
-  "requires": true,
-  "dependencies": {
-    "leftpad": {
-      "version": "0.0.1",
-			"integrity": "sha512-SSB3aXNoIEkgd2FzIGEgYmFsbGVy"
-    }
-  }
-}
-`), 0600)).To(Succeed())
+					{
+						"name": "simple_app",
+						"lockfileVersion": 1,
+						"requires": true,
+						"dependencies": {
+							"leftpad": {
+								"version": "0.0.1",
+								"integrity": "sha512-SSB3aXNoIEkgd2FzIGEgYmFsbGVy"
+							}
+						}
+					}`), 0600)).To(Succeed())
 
 			})
 			it.After(func() {
@@ -236,43 +230,38 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 		context("the bom.json has no hashes and cannot open package-lock.json", func() {
 			it.Before(func() {
 				executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-						`
-{
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "purl": "pkg:npm/leftpad@0.0.1"
-		}
-  ]
-}
-`), 0600)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+						"components": [
+							{
+								"type": "library",
+								"name": "leftpad",
+								"version": "0.0.1",
+								"description": "left pad numbers",
+								"licenses": [
+									{
+										"license": {
+											"id": "BSD-3-Clause"
+										}
+									}
+								],
+								"purl": "pkg:npm/leftpad@0.0.1"
+							}
+						]
+					}`), 0600)).To(Succeed())
 					return nil
 				}
 
-				Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`
-{
-  "name": "simple_app",
-  "lockfileVersion": 1,
-  "requires": true,
-  "dependencies": {
-    "leftpad": {
-      "version": "0.0.1",
-			"integrity": "sha521-hashFromPackageLockJson"
-    }
-  }
-}
-`), 0000)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`{
+						"name": "simple_app",
+						"lockfileVersion": 1,
+						"requires": true,
+						"dependencies": {
+							"leftpad": {
+								"version": "0.0.1",
+								"integrity": "sha521-hashFromPackageLockJson"
+							}
+						}
+					}`), 0000)).To(Succeed())
 
 			})
 			it.After(func() {
@@ -297,27 +286,24 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 		context("the bom.json has no hashes and cannot unmarshal package-lock.json", func() {
 			it.Before(func() {
 				executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-						`
-{
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "purl": "pkg:npm/leftpad@0.0.1"
-		}
-  ]
-}
-`), 0600)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+						"components": [
+							{
+								"type": "library",
+								"name": "leftpad",
+								"version": "0.0.1",
+								"description": "left pad numbers",
+								"licenses": [
+									{
+										"license": {
+											"id": "BSD-3-Clause"
+										}
+									}
+								],
+								"purl": "pkg:npm/leftpad@0.0.1"
+							}
+						]
+					}`), 0600)).To(Succeed())
 					return nil
 				}
 
@@ -379,43 +365,38 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			context("cannot decode base64 encoded checksum", func() {
 				it.Before(func() {
 					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-							`
-{
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "purl": "pkg:npm/leftpad@0.0.1"
-		}
-  ]
-}
-`), 0600)).To(Succeed())
+						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+							"components": [
+								{
+									"type": "library",
+									"name": "leftpad",
+									"version": "0.0.1",
+									"description": "left pad numbers",
+									"licenses": [
+										{
+											"license": {
+												"id": "BSD-3-Clause"
+											}
+										}
+									],
+									"purl": "pkg:npm/leftpad@0.0.1"
+								}
+							]
+						}`), 0600)).To(Succeed())
 						return nil
 					}
 
-					Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`
-{
-  "name": "simple_app",
-  "lockfileVersion": 1,
-  "requires": true,
-  "dependencies": {
-    "leftpad": {
-      "version": "0.0.1",
-			"integrity": "sha512-???"
-    }
-  }
-}
-`), 0600)).To(Succeed())
+					Expect(os.WriteFile(filepath.Join(workingDir, "package-lock.json"), []byte(`{
+						"name": "simple_app",
+						"lockfileVersion": 1,
+						"requires": true,
+						"dependencies": {
+							"leftpad": {
+								"version": "0.0.1",
+								"integrity": "sha512-???"
+							}
+						}
+					}`), 0600)).To(Succeed())
 
 				})
 				it.After(func() {
@@ -444,25 +425,22 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			context("the BOM entry contains unsupported checksum algorithm", func() {
 				it.Before(func() {
 					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-							`
-{
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "hashes": [
-        {
-          "alg": "randomAlgorithm",
-          "content": "86b1a4de4face180ac545a83f1503523d8fed115"
-        }
-      ]
-		}
-  ]
-}
-`), 0600)).To(Succeed())
+						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+							"components": [
+								{
+									"type": "library",
+									"name": "leftpad",
+									"version": "0.0.1",
+									"description": "left pad numbers",
+									"hashes": [
+										{
+											"alg": "randomAlgorithm",
+											"content": "86b1a4de4face180ac545a83f1503523d8fed115"
+										}
+									]
+								}
+							]
+						}`), 0600)).To(Succeed())
 						return nil
 					}
 

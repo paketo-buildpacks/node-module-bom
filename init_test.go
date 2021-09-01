@@ -12,5 +12,6 @@ func TestUnitNodeModuleBOM(t *testing.T) {
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
 	suite("ModuleBOM", testModuleBOM)
+	suite("PackageLock", testPackageLock)
 	suite.Run(t)
 }
