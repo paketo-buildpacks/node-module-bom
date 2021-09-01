@@ -39,7 +39,6 @@ type packageLock struct {
 }
 
 func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
-
 	buffer := bytes.NewBuffer(nil)
 	args := []string{"-o", "bom.json"}
 	m.logger.Subprocess("Running 'cyclonedx-bom %s'", strings.Join(args, " "))
