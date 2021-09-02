@@ -119,6 +119,7 @@ func TestIntegration(t *testing.T) {
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("NPM", testNPM)
 	suite("Offline", testOffline)
+	suite("PackageLockHashes", testPackageLockHashes)
 	suite("Vendored", testVendored)
 	suite("Yarn", testYarn)
 	suite.Run(t)

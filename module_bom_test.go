@@ -38,64 +38,68 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 
 		executable = &fakes.Executable{}
 		executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-			Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-				`
-{
-  "bomFormat": "CycloneDX",
-  "specVersion": "1.3",
-  "serialNumber": "urn:uuid:a717bde3-8a77-4ec6-a530-5d0d9007ecbe",
-  "version": 1,
-  "metadata": {
-    "timestamp": "2021-08-16T19:35:52.107Z",
-    "tools": [
-      {
-        "vendor": "CycloneDX",
-        "name": "Node.js module",
-        "version": "3.0.3"
-      }
-    ],
-    "component": {
-      "type": "library"
-    }
-  },
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "hashes": [
-        {
-          "alg": "SHA-1",
-          "content": "86b1a4de4face180ac545a83f1503523d8fed115"
-        }
-      ],
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "purl": "pkg:npm/leftpad@0.0.1"
-		},
-    {
-      "type": "library",
-      "name": "rightpad",
-      "version": "1.0.0",
-      "description": "right pad numbers",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache"
-          }
-        }
-      ],
-			"purl": "pkg:npm/rightpad@1.0.0"
-    }
-  ]
-}
-`), 0644)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+				"bomFormat": "CycloneDX",
+				"specVersion": "1.3",
+				"serialNumber": "urn:uuid:a717bde3-8a77-4ec6-a530-5d0d9007ecbe",
+				"version": 1,
+				"metadata": {
+					"timestamp": "2021-08-16T19:35:52.107Z",
+					"tools": [
+						{
+							"vendor": "CycloneDX",
+							"name": "Node.js module",
+							"version": "3.0.3"
+						}
+					],
+					"component": {
+						"type": "library"
+					}
+				},
+				"components": [
+					{
+						"type": "library",
+						"name": "leftpad",
+						"version": "0.0.1",
+						"description": "left pad numbers",
+						"hashes": [
+							{
+								"alg": "SHA-1",
+								"content": "86b1a4de4face180ac545a83f1503523d8fed115"
+							}
+						],
+						"licenses": [
+							{
+								"license": {
+									"id": "BSD-3-Clause"
+								}
+							}
+						],
+						"purl": "pkg:npm/leftpad@0.0.1"
+					},
+					{
+						"type": "library",
+						"name": "rightpad",
+						"version": "1.0.0",
+						"description": "right pad numbers",
+						"hashes": [
+							{
+								"alg": "SHA-256",
+								"content": "123456789"
+							}
+						],
+						"licenses": [
+							{
+								"license": {
+									"id": "Apache"
+								}
+							}
+						],
+						"purl": "pkg:npm/rightpad@1.0.0"
+					}
+				]
+			}
+			`), 0600)).To(Succeed())
 			return nil
 		}
 
@@ -110,7 +114,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("Generate", func() {
-		it("succeeds in installing the BOM generation tool", func() {
+		it("succeeds in installing the BOM generation tool and creating the BOM", func() {
 			bomEntries, err := moduleBOM.Generate(workingDir)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -143,11 +147,55 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 						PURL:     "pkg:npm/rightpad@1.0.0",
 						Licenses: []string{"Apache"},
 						Version:  "1.0.0",
+						Checksum: packit.BOMChecksum{
+							Algorithm: packit.SHA256,
+							Hash:      "123456789",
+						},
 					},
 				},
 			}))
 
 			Expect(filepath.Join(workingDir, "bom.json")).ToNot(BeAnExistingFile())
+		})
+
+		context("the bom.json has no hashes", func() {
+			it.Before(func() {
+				executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
+					Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+						"components": [
+							{
+								"type": "library",
+								"name": "leftpad",
+								"version": "0.0.1",
+								"description": "left pad numbers",
+								"licenses": [
+									{
+										"license": {
+											"id": "BSD-3-Clause"
+										}
+									}
+								],
+								"purl": "pkg:npm/leftpad@0.0.1"
+							}
+						]
+					}`), 0600)).To(Succeed())
+					return nil
+				}
+			})
+			it("the output BOM does not contain hashes", func() {
+				bomEntries, err := moduleBOM.Generate(workingDir)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(bomEntries).To(Equal([]packit.BOMEntry{
+					{
+						Name: "leftpad",
+						Metadata: packit.BOMMetadata{
+							PURL:     "pkg:npm/leftpad@0.0.1",
+							Licenses: []string{"BSD-3-Clause"},
+							Version:  "0.0.1",
+						},
+					},
+				}))
+			})
 		})
 
 		context("failure cases", func() {
@@ -186,7 +234,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 			context("cannot decode the bom.json into a struct", func() {
 				it.Before(func() {
 					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(``), 0644)).To(Succeed())
+						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(``), 0600)).To(Succeed())
 						return nil
 					}
 				})
@@ -199,27 +247,23 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 
 			context("the BOM entry contains unsupported checksum algorithm", func() {
 				it.Before(func() {
-
 					executable.ExecuteCall.Stub = func(execution pexec.Execution) error {
-						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(
-							`
-{
-  "components": [
-    {
-      "type": "library",
-      "name": "leftpad",
-      "version": "0.0.1",
-      "description": "left pad numbers",
-      "hashes": [
-        {
-          "alg": "randomAlgorithm",
-          "content": "86b1a4de4face180ac545a83f1503523d8fed115"
-        }
-      ]
-		}
-  ]
-}
-`), 0644)).To(Succeed())
+						Expect(os.WriteFile(filepath.Join(workingDir, "bom.json"), []byte(`{
+							"components": [
+								{
+									"type": "library",
+									"name": "leftpad",
+									"version": "0.0.1",
+									"description": "left pad numbers",
+									"hashes": [
+										{
+											"alg": "randomAlgorithm",
+											"content": "86b1a4de4face180ac545a83f1503523d8fed115"
+										}
+									]
+								}
+							]
+						}`), 0600)).To(Succeed())
 						return nil
 					}
 
@@ -236,7 +280,6 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					_, err := moduleBOM.Generate(workingDir)
 					Expect(err).To(MatchError("failed to get supported BOM checksum algorithm: randomAlgorithm is not valid"))
-
 				})
 			})
 		})
