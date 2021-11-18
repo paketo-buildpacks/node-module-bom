@@ -77,7 +77,18 @@ func testNPM(t *testing.T, context spec.G, it spec.S) {
 
 				Eventually(container).Should(BeAvailable())
 				Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
-				Expect(image.Labels["io.buildpacks.build.metadata"]).To(ContainSubstring(`"name":"leftpad"`))
+				// check for SBOM file; get JSON; validate JSON; look for valid contents
+
+				container, err = docker.Container.Run.
+					WithPublish("8080").
+					WithEntrypoint("launcher").
+					WithCommand("cat /layers/sbom/paketo-buildpacks_node-module-bom/launch/bom.syft.json").
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				cLogs, err := docker.Container.Logs.Execute(container.ID)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(cLogs.String()).Should(ContainSubstring("leftpad"))
 			})
 		})
 	})

@@ -7,10 +7,10 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-func TestUnitNodeModuleBOM(t *testing.T) {
-	suite := spec.New("node-module-bom", spec.Report(report.Terminal{}))
+func TestUnitNodeModuleSBOM(t *testing.T) {
+	suite := spec.New("node-module-sbom", spec.Report(report.Terminal{}))
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
-	suite("ModuleBOM", testModuleBOM)
+	suite("ModuleSBOM", testModuleSBOM)
 	suite.Run(t)
 }

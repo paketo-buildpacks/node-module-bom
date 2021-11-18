@@ -46,6 +46,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 				{
+					Name: "syft",
+					Metadata: map[string]interface{}{
+						"build": true,
+					},
+				},
+				{
 					Name: "node_modules",
 					Metadata: map[string]interface{}{
 						"build": true,
@@ -69,6 +75,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Requires: []packit.BuildPlanRequirement{
 					{
 						Name: "node",
+						Metadata: map[string]interface{}{
+							"build": true,
+						},
+					},
+					{
+						Name: "syft",
 						Metadata: map[string]interface{}{
 							"build": true,
 						},

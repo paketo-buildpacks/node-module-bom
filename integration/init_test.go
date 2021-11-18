@@ -26,6 +26,7 @@ var (
 	nodeStartBuildpack            string
 	npmStartBuildpack             string
 	yarnStartBuildpack            string
+	syftBuildpack                 string
 	root                          string
 
 	config struct {
@@ -45,6 +46,7 @@ var (
 		Yarn        string `json:"yarn"`
 		YarnInstall string `json:"yarn-install"`
 		YarnStart   string `json:"yarn-start"`
+		Syft        string `json:"syft"`
 	}
 )
 
@@ -113,6 +115,10 @@ func TestIntegration(t *testing.T) {
 	yarnStartBuildpack, err = buildpackStore.Get.
 		Execute(integrationjson.YarnStart)
 	Expect(err).NotTo(HaveOccurred())
+
+	// syftBuildpack, err = buildpackStore.Get.
+	// 	Execute(integrationjson.Syft)
+	// Expect(err).NotTo(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(5 * time.Second)
 

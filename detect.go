@@ -11,9 +11,16 @@ import (
 func Detect() packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
 		plan := packit.BuildPlan{
+			// TODO: decide if node requirement is still needed
 			Requires: []packit.BuildPlanRequirement{
 				{
 					Name: "node",
+					Metadata: map[string]interface{}{
+						"build": true,
+					},
+				},
+				{
+					Name: "syft",
 					Metadata: map[string]interface{}{
 						"build": true,
 					},

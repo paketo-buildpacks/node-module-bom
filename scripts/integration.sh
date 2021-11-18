@@ -82,30 +82,30 @@ function images::pull() {
   fi
 
   if [[ "${builder}" == "null" || -z "${builder}" ]]; then
-    builder="index.docker.io/paketobuildpacks/builder:buildpackless-base"
+    builder="hacked-builder"
   fi
 
-  util::print::title "Pulling builder image..."
-  docker pull "${builder}"
+  # util::print::title "Pulling builder image..."
+  # docker pull "${builder}"
 
   util::print::title "Setting default pack builder image..."
   pack config default-builder "${builder}"
 
-  local run_image lifecycle_image
-  run_image="$(
-    pack inspect-builder "${builder}" --output json \
-      | jq -r '.remote_info.run_images[0].name'
-  )"
-  lifecycle_image="index.docker.io/buildpacksio/lifecycle:$(
-    pack inspect-builder "${builder}" --output json \
-      | jq -r '.remote_info.lifecycle.version'
-  )"
+  # local run_image lifecycle_image
+  # run_image="$(
+  #   pack inspect-builder "${builder}" --output json \
+  #     | jq -r '.remote_info.run_images[0].name'
+  # )"
+  # lifecycle_image="index.docker.io/buildpacksio/lifecycle:$(
+  #   pack inspect-builder "${builder}" --output json \
+  #     | jq -r '.remote_info.lifecycle.version'
+  # )"
 
-  util::print::title "Pulling run image..."
-  docker pull "${run_image}"
+  # util::print::title "Pulling run image..."
+  # docker pull "${run_image}"
 
-  util::print::title "Pulling lifecycle image..."
-  docker pull "${lifecycle_image}"
+  # util::print::title "Pulling lifecycle image..."
+  # docker pull "${lifecycle_image}"
 }
 
 function token::fetch() {
