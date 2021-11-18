@@ -28,7 +28,7 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context.Pend("when the buildpack is run with pack build that is offline", func() {
+	context.Focus("when the buildpack is run with pack build that is offline", func() {
 		var (
 			image              occam.Image
 			container          occam.Container
@@ -69,8 +69,8 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 					WithPullPolicy("never").
 					WithBuildpacks(
 						offlineNodeEngineBuildpack,
-						// syftBuildpack,
-						filepath.Join(home, "Downloads", "syft.tgz"),
+						// offlineSyftBuildpack,
+						filepath.Join(home, "Downloads", "syft-offline.tgz"),
 						offlineNodeModuleBOMBuildpack,
 						nodeStartBuildpack,
 					).

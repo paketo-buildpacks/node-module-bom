@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/ForestEckhardt/freezer"
 	"github.com/paketo-buildpacks/occam"
+	"github.com/paketo-buildpacks/packit/pexec"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
@@ -27,6 +29,7 @@ var (
 	npmStartBuildpack             string
 	yarnStartBuildpack            string
 	syftBuildpack                 string
+	offlineSyftBuildpack          string
 	root                          string
 
 	config struct {
@@ -50,6 +53,34 @@ var (
 	}
 )
 
+type createPackage struct {
+	executable freezer.Executable
+}
+
+func NewCreatePackage() createPackage {
+	return createPackage{
+		executable: pexec.NewExecutable("create-package"),
+	}
+}
+
+func (cp createPackage) Execute(buildpackDir, output, version string, cached bool) error {
+	args := []string{
+		"--destination", output,
+		"--version", version,
+	}
+
+	if cached {
+		args = append(args, "--include-dependencies")
+	}
+
+	return cp.executable.Execute(pexec.Execution{
+		Args:   args,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+		Dir:    buildpackDir,
+	})
+}
+
 func TestIntegration(t *testing.T) {
 	Expect := NewWithT(t).Expect
 
@@ -71,6 +102,9 @@ func TestIntegration(t *testing.T) {
 	Expect(file.Close()).To(Succeed())
 
 	buildpackStore := occam.NewBuildpackStore()
+
+	cp := NewCreatePackage()
+	createPackageBuildpackStore := occam.NewBuildpackStore().WithPackager(cp)
 
 	nodeModuleBOMBuildpack, err = buildpackStore.Get.
 		WithVersion("1.2.3").
@@ -117,6 +151,11 @@ func TestIntegration(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// syftBuildpack, err = buildpackStore.Get.
+	// 	Execute(integrationjson.Syft)
+	// Expect(err).NotTo(HaveOccurred())
+
+	// offlineSyftBuildpack , err = createPackageBuildpackStore.Get.
+	// WithOfflineDependencies().
 	// 	Execute(integrationjson.Syft)
 	// Expect(err).NotTo(HaveOccurred())
 
