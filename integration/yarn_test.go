@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/occam"
@@ -27,14 +28,13 @@ func testYarn(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context.Focus("when the buildpack is run with pack build", func() {
+	context("when the buildpack is run with pack build", func() {
 		var (
-			image               occam.Image
-			container           occam.Container
-			layerSBOMContainer  occam.Container
-			launchSBOMContainer occam.Container
-			name                string
-			source              string
+			image              occam.Image
+			container          occam.Container
+			layerSBOMContainer occam.Container
+			name               string
+			source             string
 		)
 
 		it.Before(func() {
@@ -53,7 +53,6 @@ func testYarn(t *testing.T, context spec.G, it spec.S) {
 			it.After(func() {
 				Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
 				Expect(docker.Container.Remove.Execute(layerSBOMContainer.ID)).To(Succeed())
-				Expect(docker.Container.Remove.Execute(launchSBOMContainer.ID)).To(Succeed())
 			})
 
 			it("builds, logs and runs correctly", func() {
@@ -91,28 +90,12 @@ func testYarn(t *testing.T, context spec.G, it spec.S) {
 				layerSBOMContainer, err = docker.Container.Run.
 					WithPublish("8080").
 					WithEntrypoint("launcher").
-					// WithCommand("cat /layers/sbom/paketo-buildpacks_node-module-bom/launch/node-module-bom/sbom.syft.json").
-					// TODO: File an issue against lifecycle pointing out that the path above (derived from inline comment) is wrong
-					// https://github.com/buildpacks/lifecycle/blob/main/builder.go#L143-L150
-					WithCommand("cat  /layers/sbom/launch/paketo-buildpacks_node-module-bom/node-module-sbom/sbom.syft.json").
+					WithCommand(fmt.Sprintf("cat /layers/sbom/launch/%s/node-module-sbom/sbom.syft.json", strings.ReplaceAll(config.Buildpack.ID, "/", "_"))).
 					Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(func() string {
 					cLogs, err := docker.Container.Logs.Execute(layerSBOMContainer.ID)
-					Expect(err).NotTo(HaveOccurred())
-					return cLogs.String()
-				}).Should(ContainSubstring("leftpad"))
-
-				launchSBOMContainer, err = docker.Container.Run.
-					WithPublish("8080").
-					WithEntrypoint("launcher").
-					WithCommand("cat  /layers/sbom/launch/sbom.syft.json").
-					Execute(image.ID)
-				Expect(err).NotTo(HaveOccurred())
-
-				Eventually(func() string {
-					cLogs, err := docker.Container.Logs.Execute(launchSBOMContainer.ID)
 					Expect(err).NotTo(HaveOccurred())
 					return cLogs.String()
 				}).Should(ContainSubstring("leftpad"))

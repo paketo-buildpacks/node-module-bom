@@ -101,6 +101,33 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(sbom.GenerateCall.Receives.LayerName).To(Equal("node-module-sbom"))
 	})
 
+	context("when BP_NODE_PROJECT_PATH is set", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_NODE_PROJECT_PATH", "src"))
+		})
+		it.After(func() {
+			Expect(os.Unsetenv("BP_NODE_PROJECT_PATH"))
+		})
+		it("generates an sbom for the correct subdirectory", func() {
+			_, err := build(packit.BuildContext{
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:    "Some Buildpack",
+					Version: "some-version",
+				},
+				CNBPath:    cnbDir,
+				Platform:   packit.Platform{Path: "platform"},
+				Layers:     packit.Layers{Path: layersDir},
+				Stack:      "some-stack",
+				WorkingDir: workingDir,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(sbom.GenerateCall.Receives.WorkingDir).To(Equal(filepath.Join(workingDir, "src")))
+			Expect(sbom.GenerateCall.Receives.LayersDir).To(Equal(layersDir))
+			Expect(sbom.GenerateCall.Receives.LayerName).To(Equal("node-module-sbom"))
+		})
+	})
+
 	context("failure cases", func() {
 		context("when the node-module-sbom layer cannot be retrieved", func() {
 			it.Before(func() {

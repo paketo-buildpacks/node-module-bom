@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/occam"
@@ -27,12 +28,13 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context("when the buildpack is run with pack build that is offline", func() {
+	context.Pend("when the buildpack is run with pack build that is offline", func() {
 		var (
-			image     occam.Image
-			container occam.Container
-			name      string
-			source    string
+			image              occam.Image
+			container          occam.Container
+			layerSBOMContainer occam.Container
+			name               string
+			source             string
 		)
 
 		it.Before(func() {
@@ -50,6 +52,7 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 		context("default vendored app builds offline", func() {
 			it.After(func() {
 				Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
+				Expect(docker.Container.Remove.Execute(layerSBOMContainer.ID)).To(Succeed())
 			})
 
 			it("builds, logs and runs correctly", func() {
@@ -58,11 +61,16 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 				source, err = occam.Source(filepath.Join("testdata", "vendored_app"))
 				Expect(err).ToNot(HaveOccurred())
 
+				home, err := os.UserHomeDir()
+				Expect(err).NotTo(HaveOccurred())
+
 				var logs fmt.Stringer
 				image, logs, err = pack.WithNoColor().Build.
 					WithPullPolicy("never").
 					WithBuildpacks(
 						offlineNodeEngineBuildpack,
+						// syftBuildpack,
+						filepath.Join(home, "Downloads", "syft.tgz"),
 						offlineNodeModuleBOMBuildpack,
 						nodeStartBuildpack,
 					).
@@ -75,9 +83,20 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 					Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(container).Should(BeAvailable())
 				Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
-				Expect(image.Labels["io.buildpacks.build.metadata"]).To(ContainSubstring(`"name":"leftpad"`))
+
+				layerSBOMContainer, err = docker.Container.Run.
+					WithPublish("8080").
+					WithEntrypoint("launcher").
+					WithCommand(fmt.Sprintf("cat /layers/sbom/launch/%s/node-module-sbom/sbom.syft.json", strings.ReplaceAll(config.Buildpack.ID, "/", "_"))).
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					cLogs, err := docker.Container.Logs.Execute(layerSBOMContainer.ID)
+					Expect(err).NotTo(HaveOccurred())
+					return cLogs.String()
+				}).Should(ContainSubstring("leftpad"))
 			})
 		})
 	})

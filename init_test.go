@@ -9,7 +9,7 @@ import (
 
 func TestUnitNodeModuleSBOM(t *testing.T) {
 	suite := spec.New("node-module-sbom", spec.Report(report.Terminal{}))
-	suite("Build", testBuild)
+	suite("Build", testBuild, spec.Sequential())
 	suite("Detect", testDetect)
 	suite("ModuleSBOM", testModuleSBOM)
 	suite.Run(t)

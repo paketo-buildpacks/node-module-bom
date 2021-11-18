@@ -1,6 +1,8 @@
 package nodemodulebom
 
 import (
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/paketo-buildpacks/packit"
@@ -34,8 +36,7 @@ func Build(sbom SBOMGenerator, clock chronos.Clock, logger scribe.Emitter) packi
 		sbomLayer.Launch = true
 
 		duration, err := clock.Measure(func() error {
-			//TODO: Pass path to lockfile instead of working dir root
-			err = sbom.Generate(context.WorkingDir, context.Layers.Path, "node-module-sbom")
+			err = sbom.Generate(filepath.Join(context.WorkingDir, os.Getenv("BP_NODE_PROJECT_PATH")), context.Layers.Path, "node-module-sbom")
 			return err
 		})
 		if err != nil {
