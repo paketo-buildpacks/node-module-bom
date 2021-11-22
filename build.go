@@ -1,14 +1,13 @@
 package nodemodulebom
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
+	"io/ioutil"
 	"time"
 
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/chronos"
 	"github.com/paketo-buildpacks/packit/postal"
+	"github.com/paketo-buildpacks/packit/sbom"
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
@@ -28,66 +27,21 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
-		logger.Process("Resolving CycloneDX Node.js Module version")
+		logger.Process("Generating SBOM for directory %s", context.WorkingDir)
 
-		dependency, err := dependencyManager.Resolve(
-			filepath.Join(context.CNBPath, "buildpack.toml"),
-			"cyclonedx-node-module",
-			"*",
-			context.Stack,
-		)
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-		logger.Subprocess("Selected %s version: %s", dependency.Name, dependency.Version)
-		logger.Break()
-
-		cycloneDXNodeModuleLayer, err := context.Layers.Get("cyclonedx-node-module")
+		files, err := ioutil.ReadDir(context.WorkingDir)
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
 
-		cachedSHA, ok := cycloneDXNodeModuleLayer.Metadata["dependency-sha"].(string)
-		if ok && cachedSHA == dependency.SHA256 {
-			logger.Process("Reusing cached layer %s", cycloneDXNodeModuleLayer.Path)
-			logger.Break()
-		} else {
-			logger.Process("Executing build process")
-			cycloneDXNodeModuleLayer, err = cycloneDXNodeModuleLayer.Reset()
-			if err != nil {
-				return packit.BuildResult{}, err
-			}
-			logger.Subprocess("Installing %s %s", dependency.Name, dependency.Version)
-			duration, err := clock.Measure(func() error {
-				return dependencyManager.Deliver(dependency, context.CNBPath, cycloneDXNodeModuleLayer.Path, context.Platform.Path)
-			})
-			if err != nil {
-				return packit.BuildResult{}, err
-			}
-
-			logger.Action("Completed in %s", duration.Round(time.Millisecond))
-			logger.Break()
-
-			cycloneDXNodeModuleLayer.Metadata = map[string]interface{}{
-				"dependency-sha": dependency.SHA256,
-				"built_at":       clock.Now().Format(time.RFC3339Nano),
-			}
+		logger.Detail("contents of: %s", context.WorkingDir)
+		for _, f := range files {
+			logger.Detail(f.Name())
 		}
 
-		cycloneDXNodeModuleLayer.Cache = true
-
-		logger.Process("Configuring environment")
-		logger.Subprocess("Appending %s onto PATH", dependency.Name)
-		logger.Break()
-
-		os.Setenv("PATH", fmt.Sprint(os.Getenv("PATH"), string(os.PathListSeparator), filepath.Join(cycloneDXNodeModuleLayer.Path, "bin")))
-
-		toolBOM := dependencyManager.GenerateBillOfMaterials(dependency)
-
-		logger.Process("Running %s", dependency.Name)
-		var moduleBOM []packit.BOMEntry
+		var bom sbom.SBOM
 		duration, err := clock.Measure(func() error {
-			moduleBOM, err = nodeModuleBOM.Generate(context.WorkingDir)
+			bom, err = sbom.Generate(context.WorkingDir)
 			return err
 		})
 		if err != nil {
@@ -97,13 +51,29 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 		logger.Action("Completed in %s", duration.Round(time.Millisecond))
 		logger.Break()
 
+		layer, err := context.Layers.Get("node-module-bom")
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+		layer.SBOM.Set("cdx.json", bom.Format(sbom.CycloneDXFormat))
+		layer.SBOM.Set("syft.json", bom.Format(sbom.SyftFormat))
+		layer.SBOM.Set("spdx.json", bom.Format(sbom.SPDXFormat))
+
+		b, err := ioutil.ReadAll(bom.Format(sbom.SyftFormat))
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+		logger.Detail("%s", string(b[:]))
+
 		return packit.BuildResult{
-			Layers: []packit.Layer{cycloneDXNodeModuleLayer},
+			Layers: []packit.Layer{
+				layer,
+			},
 			Build: packit.BuildMetadata{
-				BOM: append(toolBOM, moduleBOM...),
+				SBOM: layer.SBOM,
 			},
 			Launch: packit.LaunchMetadata{
-				BOM: moduleBOM,
+				SBOM: layer.SBOM,
 			},
 		}, nil
 	}
