@@ -29,7 +29,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir        string
 		timestamp         time.Time
 		dependencyManager *fakes.DependencyManager
-		nodeModuleBOM     *fakes.NodeModuleBOM
 		buffer            *bytes.Buffer
 
 		build packit.BuildFunc
@@ -78,25 +77,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			},
 		}
 
-		nodeModuleBOM = &fakes.NodeModuleBOM{}
-		nodeModuleBOM.GenerateCall.Returns.BOMEntrySlice = []packit.BOMEntry{
-			{
-				Name: "leftpad",
-				Metadata: packit.BOMMetadata{
-					Version: "leftpad-dependency-version",
-					Checksum: packit.BOMChecksum{
-						Algorithm: algorithm,
-						Hash:      "leftpad-dependency-sha",
-					},
-					URI: "leftpad-dependency-uri",
-				},
-			},
-		}
-
 		buffer = bytes.NewBuffer(nil)
 		logEmitter := scribe.NewEmitter(buffer)
 
-		build = nodemodulebom.Build(dependencyManager, nodeModuleBOM, clock, logEmitter)
+		build = nodemodulebom.Build(dependencyManager, clock, logEmitter)
 	})
 
 	it.After(func() {
@@ -210,8 +194,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Version: "cyclonedx-node-module-dependency-version",
 			},
 		}))
-
-		Expect(nodeModuleBOM.GenerateCall.Receives.WorkingDir).To(Equal(workingDir))
 	})
 
 	context("when there is a dependency cache match to reuse", func() {
@@ -320,8 +302,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Version: "cyclonedx-node-module-dependency-version",
 				},
 			}))
-			Expect(nodeModuleBOM.GenerateCall.Receives.WorkingDir).To(Equal(workingDir))
-
 			Expect(buffer.String()).To(ContainSubstring("Reusing cached layer"))
 			Expect(buffer.String()).ToNot(ContainSubstring("Executing build process"))
 		})
@@ -398,23 +378,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					WorkingDir: workingDir,
 				})
 				Expect(err).To(MatchError(ContainSubstring("failed to install dependency")))
-			})
-		})
-
-		context("when the node module BOM cannot be generated", func() {
-			it.Before(func() {
-				nodeModuleBOM.GenerateCall.Returns.Error = errors.New("failed to generate node module BOM")
-			})
-
-			it("returns an error", func() {
-				_, err := build(packit.BuildContext{
-					CNBPath:    cnbDir,
-					Platform:   packit.Platform{Path: "platform"},
-					Layers:     packit.Layers{Path: layersDir},
-					Stack:      "some-stack",
-					WorkingDir: workingDir,
-				})
-				Expect(err).To(MatchError(ContainSubstring("failed to generate node module BOM")))
 			})
 		})
 	})

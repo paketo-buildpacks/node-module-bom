@@ -1,7 +1,6 @@
 package nodemodulebom
 
 import (
-	"io/ioutil"
 	"time"
 
 	"github.com/paketo-buildpacks/packit"
@@ -18,28 +17,16 @@ type DependencyManager interface {
 	GenerateBillOfMaterials(dependencies ...postal.Dependency) []packit.BOMEntry
 }
 
-//go:generate faux --interface NodeModuleBOM --output fakes/node_module_bom.go
-type NodeModuleBOM interface {
-	Generate(workingDir string) ([]packit.BOMEntry, error)
-}
-
-func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clock chronos.Clock, logger scribe.Emitter) packit.BuildFunc {
+func Build(dependencyManager DependencyManager, clock chronos.Clock, logger scribe.Emitter) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
 		logger.Process("Generating SBOM for directory %s", context.WorkingDir)
 
-		files, err := ioutil.ReadDir(context.WorkingDir)
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-
-		logger.Detail("contents of: %s", context.WorkingDir)
-		for _, f := range files {
-			logger.Detail(f.Name())
-		}
-
-		var bom sbom.SBOM
+		var (
+			bom sbom.SBOM
+			err error
+		)
 		duration, err := clock.Measure(func() error {
 			bom, err = sbom.Generate(context.WorkingDir)
 			return err
@@ -55,25 +42,30 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
+
+		layer, err = layer.Reset()
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+
+		layer.Launch = true
+
 		layer.SBOM.Set("cdx.json", bom.Format(sbom.CycloneDXFormat))
 		layer.SBOM.Set("syft.json", bom.Format(sbom.SyftFormat))
 		layer.SBOM.Set("spdx.json", bom.Format(sbom.SPDXFormat))
 
-		b, err := ioutil.ReadAll(bom.Format(sbom.SyftFormat))
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-		logger.Detail("%s", string(b[:]))
+		bomEntries := make(packit.SBOMEntries)
+		bomEntries.Set("cdx.json", bom.Format(sbom.CycloneDXFormat))
+		bomEntries.Set("syft.json", bom.Format(sbom.SyftFormat))
+		bomEntries.Set("spdx.json", bom.Format(sbom.SPDXFormat))
 
 		return packit.BuildResult{
 			Layers: []packit.Layer{
 				layer,
 			},
-			Build: packit.BuildMetadata{
-				SBOM: layer.SBOM,
-			},
+			Build: packit.BuildMetadata{},
 			Launch: packit.LaunchMetadata{
-				SBOM: layer.SBOM,
+				SBOM: bomEntries,
 			},
 		}, nil
 	}

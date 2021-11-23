@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/occam"
@@ -27,12 +28,13 @@ func testNPM(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context("when the buildpack is run with pack build", func() {
+	context.Focus("when the buildpack is run with pack build", func() {
 		var (
-			image     occam.Image
-			container occam.Container
-			name      string
-			source    string
+			image         occam.Image
+			container     occam.Container
+			sbomContainer occam.Container
+			name          string
+			source        string
 		)
 
 		it.Before(func() {
@@ -50,6 +52,7 @@ func testNPM(t *testing.T, context spec.G, it spec.S) {
 		context("building a basic npm app is pack built", func() {
 			it.After(func() {
 				Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
+				Expect(docker.Container.Remove.Execute(sbomContainer.ID)).To(Succeed())
 			})
 
 			it("builds, logs and runs correctly", func() {
@@ -68,16 +71,26 @@ func testNPM(t *testing.T, context spec.G, it spec.S) {
 						npmStartBuildpack,
 					).
 					Execute(name, source)
-				Expect(err).ToNot(HaveOccurred(), logs.String)
+				Expect(err).NotTo(HaveOccurred(), logs.String)
 
 				container, err = docker.Container.Run.
 					WithPublish("8080").
 					Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(container).Should(BeAvailable())
 				Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
-				Expect(image.Labels["io.buildpacks.build.metadata"]).To(ContainSubstring(`"name":"leftpad"`))
+
+				sbomContainer, err = docker.Container.Run.
+					WithEntrypoint("launcher").
+					WithCommand(fmt.Sprintf("cat /layers/sbom/launch/%s/node-module-bom/sbom.syft.json", strings.ReplaceAll(config.Buildpack.ID, "/", "_"))).
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					cLogs, err := docker.Container.Logs.Execute(sbomContainer.ID)
+					Expect(err).NotTo(HaveOccurred())
+					return cLogs.String()
+				}).Should(ContainSubstring("leftpad"))
 			})
 		})
 	})
