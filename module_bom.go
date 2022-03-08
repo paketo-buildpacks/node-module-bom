@@ -8,9 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/pexec"
-	"github.com/paketo-buildpacks/packit/scribe"
+	"github.com/paketo-buildpacks/packit/v2"
+
+	//nolint Ignore SA1019, informed usage of deprecated package
+	"github.com/paketo-buildpacks/packit/v2/paketosbom"
+	"github.com/paketo-buildpacks/packit/v2/pexec"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
 //go:generate faux --interface Executable --output fakes/executable.go
@@ -79,18 +82,19 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 	for _, entry := range bom.Components {
 		packitEntry := packit.BOMEntry{
 			Name: entry.Name,
-			Metadata: packit.BOMMetadata{
-				Version: entry.Version,
-				PURL:    entry.PURL,
-			},
+		}
+
+		metadata := paketosbom.BOMMetadata{
+			Version: entry.Version,
+			PURL:    entry.PURL,
 		}
 
 		if len(entry.Hashes) > 0 {
-			algorithm, err := packit.GetBOMChecksumAlgorithm(entry.Hashes[0].Algorithm)
+			algorithm, err := paketosbom.GetBOMChecksumAlgorithm(entry.Hashes[0].Algorithm)
 			if err != nil {
 				return nil, err
 			}
-			packitEntry.Metadata.Checksum = packit.BOMChecksum{
+			metadata.Checksum = paketosbom.BOMChecksum{
 				Algorithm: algorithm,
 				Hash:      entry.Hashes[0].Content,
 			}
@@ -100,7 +104,10 @@ func (m ModuleBOM) Generate(workingDir string) ([]packit.BOMEntry, error) {
 		for _, license := range entry.Licenses {
 			licenses = append(licenses, license.License.ID)
 		}
-		packitEntry.Metadata.Licenses = licenses
+		metadata.Licenses = licenses
+
+		packitEntry.Metadata = metadata
+
 		entries = append(entries, packitEntry)
 	}
 
