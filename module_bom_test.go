@@ -11,9 +11,12 @@ import (
 
 	nodemodulebom "github.com/paketo-buildpacks/node-module-bom"
 	"github.com/paketo-buildpacks/node-module-bom/fakes"
-	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/pexec"
-	"github.com/paketo-buildpacks/packit/scribe"
+	"github.com/paketo-buildpacks/packit/v2"
+
+	//nolint Ignore SA1019, informed usage of deprecated package
+	"github.com/paketo-buildpacks/packit/v2/paketosbom"
+	"github.com/paketo-buildpacks/packit/v2/pexec"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -125,14 +128,14 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				Stderr: commandOutput,
 			}))
 
-			algorithm, err := packit.GetBOMChecksumAlgorithm("SHA-1")
+			algorithm, err := paketosbom.GetBOMChecksumAlgorithm("SHA-1")
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(bomEntries).To(Equal([]packit.BOMEntry{
 				{
 					Name: "leftpad",
-					Metadata: packit.BOMMetadata{
-						Checksum: packit.BOMChecksum{
+					Metadata: paketosbom.BOMMetadata{
+						Checksum: paketosbom.BOMChecksum{
 							Algorithm: algorithm,
 							Hash:      "86b1a4de4face180ac545a83f1503523d8fed115",
 						},
@@ -143,12 +146,12 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				},
 				{
 					Name: "rightpad",
-					Metadata: packit.BOMMetadata{
+					Metadata: paketosbom.BOMMetadata{
 						PURL:     "pkg:npm/rightpad@1.0.0",
 						Licenses: []string{"Apache"},
 						Version:  "1.0.0",
-						Checksum: packit.BOMChecksum{
-							Algorithm: packit.SHA256,
+						Checksum: paketosbom.BOMChecksum{
+							Algorithm: paketosbom.SHA256,
 							Hash:      "123456789",
 						},
 					},
@@ -188,7 +191,7 @@ func testModuleBOM(t *testing.T, context spec.G, it spec.S) {
 				Expect(bomEntries).To(Equal([]packit.BOMEntry{
 					{
 						Name: "leftpad",
-						Metadata: packit.BOMMetadata{
+						Metadata: paketosbom.BOMMetadata{
 							PURL:     "pkg:npm/leftpad@0.0.1",
 							Licenses: []string{"BSD-3-Clause"},
 							Version:  "0.0.1",
