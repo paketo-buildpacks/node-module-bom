@@ -70,7 +70,6 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 
 			cycloneDXNodeModuleLayer.Metadata = map[string]interface{}{
 				"dependency-sha": dependency.SHA256,
-				"built_at":       clock.Now().Format(time.RFC3339Nano),
 			}
 		}
 
