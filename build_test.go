@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	nodemodulebom "github.com/paketo-buildpacks/node-module-bom"
 	"github.com/paketo-buildpacks/node-module-bom/fakes"
@@ -31,7 +30,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		layersDir         string
 		cnbDir            string
 		workingDir        string
-		timestamp         time.Time
 		dependencyManager *fakes.DependencyManager
 		nodeModuleBOM     *fakes.NodeModuleBOM
 		buffer            *bytes.Buffer
@@ -49,11 +47,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		workingDir, err = os.MkdirTemp("", "workingDir")
 		Expect(err).NotTo(HaveOccurred())
-
-		timestamp = time.Now()
-		clock := chronos.NewClock(func() time.Time {
-			return timestamp
-		})
 
 		algorithm, err := paketosbom.GetBOMChecksumAlgorithm("SHA-256")
 		Expect(err).NotTo(HaveOccurred())
@@ -100,7 +93,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		buffer = bytes.NewBuffer(nil)
 		logEmitter := scribe.NewEmitter(buffer)
 
-		build = nodemodulebom.Build(dependencyManager, nodeModuleBOM, clock, logEmitter)
+		build = nodemodulebom.Build(dependencyManager, nodeModuleBOM, chronos.DefaultClock, logEmitter)
 	})
 
 	it.After(func() {
@@ -140,7 +133,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Cache:            true,
 					Metadata: map[string]interface{}{
 						"dependency-sha": "cyclonedx-node-module-dependency-sha",
-						"built_at":       timestamp.Format(time.RFC3339Nano),
 					},
 				},
 			},
