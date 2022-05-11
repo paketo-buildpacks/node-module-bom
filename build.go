@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/paketo-buildpacks/packit/v2"
@@ -81,20 +82,32 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 
 		os.Setenv("PATH", fmt.Sprint(os.Getenv("PATH"), string(os.PathListSeparator), filepath.Join(cycloneDXNodeModuleLayer.Path, "bin")))
 
-		toolBOM := dependencyManager.GenerateBillOfMaterials(dependency)
-
-		logger.Process("Running %s", dependency.Name)
-		var moduleBOM []packit.BOMEntry
-		duration, err := clock.Measure(func() error {
-			moduleBOM, err = nodeModuleBOM.Generate(context.WorkingDir)
-			return err
-		})
+		sbomDisabled, err := checkSbomDisabled()
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
 
-		logger.Action("Completed in %s", duration.Round(time.Millisecond))
-		logger.Break()
+		var toolBOM, moduleBOM []packit.BOMEntry
+
+		if sbomDisabled {
+			logger.Subprocess("Skipping Node Module BOM generation")
+			logger.Break()
+		} else {
+			toolBOM = dependencyManager.GenerateBillOfMaterials(dependency)
+
+			logger.Process("Running %s", dependency.Name)
+
+			duration, err := clock.Measure(func() error {
+				moduleBOM, err = nodeModuleBOM.Generate(context.WorkingDir)
+				return err
+			})
+			if err != nil {
+				return packit.BuildResult{}, err
+			}
+
+			logger.Action("Completed in %s", duration.Round(time.Millisecond))
+			logger.Break()
+		}
 
 		return packit.BuildResult{
 			Layers: []packit.Layer{cycloneDXNodeModuleLayer},
@@ -106,4 +119,15 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 			},
 		}, nil
 	}
+}
+
+func checkSbomDisabled() (bool, error) {
+	if disableStr, ok := os.LookupEnv("BP_DISABLE_SBOM"); ok {
+		disable, err := strconv.ParseBool(disableStr)
+		if err != nil {
+			return false, fmt.Errorf("failed to parse BP_DISABLE_SBOM value %s: %w", disableStr, err)
+		}
+		return disable, nil
+	}
+	return false, nil
 }

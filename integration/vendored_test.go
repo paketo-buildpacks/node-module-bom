@@ -29,10 +29,11 @@ func testVendored(t *testing.T, context spec.G, it spec.S) {
 
 	context("when the buildpack is run with pack build", func() {
 		var (
-			image     occam.Image
-			container occam.Container
-			name      string
-			source    string
+			image      occam.Image
+			container1 occam.Container
+			container2 occam.Container
+			name       string
+			source     string
 		)
 
 		it.Before(func() {
@@ -49,7 +50,8 @@ func testVendored(t *testing.T, context spec.G, it spec.S) {
 
 		context("default vendored app builds", func() {
 			it.After(func() {
-				Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
+				Expect(docker.Container.Remove.Execute(container1.ID)).To(Succeed())
+				Expect(docker.Container.Remove.Execute(container2.ID)).To(Succeed())
 			})
 
 			it("builds, logs and runs correctly", func() {
@@ -86,14 +88,78 @@ func testVendored(t *testing.T, context spec.G, it spec.S) {
 					MatchRegexp(`      Completed in ([0-9]*(\.[0-9]*)?[a-z]+)+`),
 				))
 
-				container, err = docker.Container.Run.
+				container1, err = docker.Container.Run.
 					WithPublish("8080").
 					Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(container).Should(BeAvailable())
-				Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
-				Expect(image.Labels["io.buildpacks.build.metadata"]).To(ContainSubstring(`"name":"leftpad"`))
+				Eventually(container1).Should(BeAvailable())
+				Eventually(container1).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
+
+				container2, err = docker.Container.Run.
+					WithCommand("cat /layers/sbom/launch/sbom.legacy.json").
+					WithEntrypoint("launcher").
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					cLogs, err := docker.Container.Logs.Execute(container2.ID)
+					Expect(err).NotTo(HaveOccurred())
+					return cLogs.String()
+				}).Should(ContainSubstring(`"name":"leftpad"`))
+			})
+		})
+
+		context("when BP_DISABLE_SBOM is true", func() {
+			it.After(func() {
+				Expect(docker.Container.Remove.Execute(container1.ID)).To(Succeed())
+				Expect(docker.Container.Remove.Execute(container2.ID)).To(Succeed())
+			})
+
+			it("skips SBOM generation", func() {
+				var err error
+
+				source, err = occam.Source(filepath.Join("testdata", "vendored_app"))
+				Expect(err).ToNot(HaveOccurred())
+
+				var logs fmt.Stringer
+				image, logs, err = pack.WithNoColor().Build.
+					WithPullPolicy("never").
+					WithEnv(map[string]string{"BP_DISABLE_SBOM": "true"}).
+					WithBuildpacks(
+						nodeEngineBuildpack,
+						nodeModuleBOMBuildpack,
+						nodeStartBuildpack,
+					).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
+
+				Expect(logs).To(ContainSubstring("Skipping Node Module BOM generation"))
+
+				Expect(logs).ToNot(ContainLines(
+					"  Running CycloneDX Node.js Module",
+					`    Running 'cyclonedx-bom -o bom.json'`,
+				))
+
+				container1, err = docker.Container.Run.
+					WithPublish("8080").
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(container1).Should(BeAvailable())
+				Eventually(container1).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
+
+				container2, err = docker.Container.Run.
+					WithCommand("cat /layers/sbom/launch/sbom.legacy.json").
+					WithEntrypoint("launcher").
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					cLogs, err := docker.Container.Logs.Execute(container2.ID)
+					Expect(err).NotTo(HaveOccurred())
+					return cLogs.String()
+				}).Should(Not(ContainSubstring(`"name":"leftpad"`)))
 			})
 		})
 	})
