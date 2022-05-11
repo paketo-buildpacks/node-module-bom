@@ -413,5 +413,26 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).To(MatchError(ContainSubstring("failed to generate node module BOM")))
 			})
 		})
+
+		context("when BP_DISABLE_SBOM is set incorrectly", func() {
+			it.Before(func() {
+				os.Setenv("BP_DISABLE_SBOM", "not-a-bool")
+			})
+
+			it.After(func() {
+				os.Unsetenv("BP_DISABLE_SBOM")
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					CNBPath:    cnbDir,
+					Platform:   packit.Platform{Path: "platform"},
+					Layers:     packit.Layers{Path: layersDir},
+					Stack:      "some-stack",
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(MatchError(ContainSubstring("failed to parse BP_DISABLE_SBOM")))
+			})
+		})
 	})
 }
