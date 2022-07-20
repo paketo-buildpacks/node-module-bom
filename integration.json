@@ -1,4 +1,5 @@
 {
+  "builders": ["paketobuildpacks/builder:buildpackless-base", "paketobuildpacks/builder-jammy-buildpackless-base"],
   "node-engine": "github.com/paketo-buildpacks/node-engine",
   "node-start": "github.com/paketo-buildpacks/node-start",
   "npm-install": "github.com/paketo-buildpacks/npm-install",
