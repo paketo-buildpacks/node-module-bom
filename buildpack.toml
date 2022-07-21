@@ -14,17 +14,17 @@ api = "0.6"
   pre-package = "./scripts/build.sh"
 
   [[metadata.dependencies]]
-    cpe = "cpe:2.3:a:owasp:cyclonedx-node-module:3.0.7:*:*:*:*:*:*:*"
+    cpe = "cpe:2.3:a:owasp:cyclonedx-node-module:3.10.4:*:*:*:*:*:*:*"
     id = "cyclonedx-node-module"
     licenses = ["Apache-2.0", "ECL-2.0", "SHL-0.51", "SHL-0.5"]
     name = "CycloneDX Node.js Module"
-    purl = "pkg:npm/%40cyclonedx/bom@3.0.7"
-    sha256 = "7974bf0e776c587c5e1ad44a7e75477ab5863ee037fd84f153727295ffd6d2cf"
-    source = "https://registry.npmjs.org/@cyclonedx/bom/-/bom-3.0.7.tgz"
-    source_sha256 = "da1b87cec24a2b029871254068c4cc575de15b6dcc3135e4c7019af898a5aa4c"
-    stacks = ["io.buildpacks.stacks.bionic"]
-    uri = "https://deps.paketo.io/cyclonedx-node-module/cyclonedx-node-module_3.0.7_linux_x64_bionic_7974bf0e.tgz"
-    version = "3.0.7"
+    purl = "pkg:npm/%40cyclonedx/bom@3.10.4"
+    sha256 = "45f60fc7c8b048d07a43bb9c261d298bf6fd74b52ed1b55c42255be5a0dc91b9"
+    source = "https://registry.npmjs.org/@cyclonedx/bom/-/bom-3.10.4.tgz"
+    source_sha256 = "7312b6d8d248d75da08a7d283833495fc7ede8ea6b6a1a38fc4aa6cdeb95125e"
+    stacks = ["io.buildpacks.stacks.bionic", "io.buildpacks.stacks.jammy"]
+    uri = "https://deps.paketo.io/cyclonedx-node-module/cyclonedx-node-module_3.10.4_linux_x64_bionic_45f60fc7.tgz"
+    version = "3.10.4"
 
   [[metadata.dependency-constraints]]
     constraint = "*"
