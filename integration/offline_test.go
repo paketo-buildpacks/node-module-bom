@@ -29,16 +29,19 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 
 	context("when the buildpack is run with pack build that is offline", func() {
 		var (
-			image      occam.Image
-			container1 occam.Container
-			container2 occam.Container
-			name       string
-			source     string
+			image     occam.Image
+			container occam.Container
+			name      string
+			source    string
+			sbomDir   string
 		)
 
 		it.Before(func() {
 			var err error
 			name, err = occam.RandomName()
+			Expect(err).NotTo(HaveOccurred())
+
+			sbomDir, err = os.MkdirTemp("", "sbom")
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -46,12 +49,12 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 			Expect(docker.Image.Remove.Execute(image.ID)).To(Succeed())
 			Expect(docker.Volume.Remove.Execute(occam.CacheVolumeNames(name))).To(Succeed())
 			Expect(os.RemoveAll(source)).To(Succeed())
+			Expect(os.RemoveAll(sbomDir)).To(Succeed())
 		})
 
 		context("default vendored app builds offline", func() {
 			it.After(func() {
-				Expect(docker.Container.Remove.Execute(container1.ID)).To(Succeed())
-				Expect(docker.Container.Remove.Execute(container2.ID)).To(Succeed())
+				Expect(docker.Container.Remove.Execute(container.ID)).To(Succeed())
 			})
 
 			it("builds, logs and runs correctly", func() {
@@ -68,29 +71,20 @@ func testOffline(t *testing.T, context spec.G, it spec.S) {
 						offlineNodeModuleBOMBuildpack,
 						nodeStartBuildpack,
 					).
+					WithSBOMOutputDir(sbomDir).
 					WithNetwork("none").
 					Execute(name, source)
 				Expect(err).ToNot(HaveOccurred(), logs.String)
 
-				container1, err = docker.Container.Run.
+				container, err = docker.Container.Run.
 					WithPublish("8080").
 					Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
+				Eventually(container).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
 
-				Eventually(container1).Should(BeAvailable())
-				Eventually(container1).Should(Serve(ContainSubstring("hello world")).OnPort(8080))
-
-				container2, err = docker.Container.Run.
-					WithCommand("cat /layers/sbom/launch/sbom.legacy.json").
-					WithEntrypoint("launcher").
-					Execute(image.ID)
+				contents, err := os.ReadFile(filepath.Join(sbomDir, "sbom", "launch", "sbom.legacy.json"))
 				Expect(err).NotTo(HaveOccurred())
-
-				Eventually(func() string {
-					cLogs, err := docker.Container.Logs.Execute(container2.ID)
-					Expect(err).NotTo(HaveOccurred())
-					return cLogs.String()
-				}).Should(ContainSubstring(`"name":"leftpad"`))
+				Expect(string(contents)).To(ContainSubstring(`"name":"leftpad"`))
 			})
 		})
 	})
