@@ -3,7 +3,7 @@ api = "0.7"
 [buildpack]
   homepage = "https://github.com/paketo-buildpacks/node-module-bom"
   id = "paketo-buildpacks/node-module-bom"
-  name = "Paketo Node Module Bill of Materials Generator Buildpack"
+  name = "Paketo Buildpack for Node Module Bill of Materials Generator"
 
   [[buildpack.licenses]]
     type = "Apache-2.0"
