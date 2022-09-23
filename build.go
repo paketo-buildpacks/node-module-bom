@@ -49,7 +49,7 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 		}
 
 		cachedSHA, ok := cycloneDXNodeModuleLayer.Metadata["dependency-sha"].(string)
-		if ok && cachedSHA == dependency.SHA256 {
+		if ok && cachedSHA == dependency.SHA256 { //nolint:staticcheck
 			logger.Process("Reusing cached layer %s", cycloneDXNodeModuleLayer.Path)
 			logger.Break()
 		} else {
@@ -70,7 +70,7 @@ func Build(dependencyManager DependencyManager, nodeModuleBOM NodeModuleBOM, clo
 			logger.Break()
 
 			cycloneDXNodeModuleLayer.Metadata = map[string]interface{}{
-				"dependency-sha": dependency.SHA256,
+				"dependency-sha": dependency.SHA256, //nolint:staticcheck
 			}
 		}
 
