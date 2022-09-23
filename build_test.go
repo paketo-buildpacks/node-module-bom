@@ -3,7 +3,6 @@ package nodemodulebom_test
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -212,7 +211,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("when there is a dependency cache match to reuse", func() {
 		it.Before(func() {
-			err := ioutil.WriteFile(filepath.Join(layersDir, "cyclonedx-node-module.toml"), []byte(`
+			err := os.WriteFile(filepath.Join(layersDir, "cyclonedx-node-module.toml"), []byte(`
 			[metadata]
 			dependency-sha = "cyclonedx-node-module-dependency-sha"
 			`), 0644)
