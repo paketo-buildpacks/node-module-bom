@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	logEmitter := scribe.NewEmitter(os.Stdout).WithLevel(os.Getenv("BP_LOG_LEVEL"))
 
 	packit.Run(
 		nodemodulebom.Detect(),
@@ -20,7 +21,7 @@ func main() {
 			postal.NewService(cargo.NewTransport()),
 			nodemodulebom.NewModuleBOM(pexec.NewExecutable("cyclonedx-bom"), scribe.NewEmitter(os.Stdout)),
 			chronos.DefaultClock,
-			scribe.NewEmitter(os.Stdout),
+			logEmitter,
 		),
 	)
 }
